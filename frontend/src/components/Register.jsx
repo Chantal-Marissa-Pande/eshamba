@@ -30,14 +30,12 @@ function Register({ setMessage, setUser }) {
     } catch (err) {
       console.error("Registration error:", err.response?.data || err.message);
 
-      // Display specific backend error if available
-      const backendError =
-        err.response?.data?.detail ||
-        JSON.stringify(err.response?.data) ||
-        "❌ Registration failed.";
-      setMessage(backendError);
-    } finally {
-      setLoading(false);
+    // show field-specific error from DRF if available
+      if (err.response?.data) {
+        setMessage("❌ " + JSON.stringify(err.response.data));
+      } else {
+        setMessage("❌ Registration failed.");
+      }
     }
   };
 
