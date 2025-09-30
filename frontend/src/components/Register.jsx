@@ -9,22 +9,35 @@ function Register({ setMessage, setUser }) {
     email: "",
     password: "",
     password2: "",
-    role: "farmer",
+    role: "farmer", // default role
   });
+
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
       const res = await register(form);
+
       setMessage("✅ Registration successful! Please log in.");
-      setUser(res.data.user.username);
+      setUser(res.data.username); // serializer returns username
       navigate("/login");
     } catch (err) {
-      console.error(err.response?.data || err.message);
-      setMessage("❌ Registration failed.");
+      console.error("Registration error:", err.response?.data || err.message);
+
+      // Display specific backend error if available
+      const backendError =
+        err.response?.data?.detail ||
+        JSON.stringify(err.response?.data) ||
+        "❌ Registration failed.";
+      setMessage(backendError);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,9 +101,10 @@ function Register({ setMessage, setUser }) {
 
       <button
         type="submit"
-        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+        disabled={loading}
+        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded w-full"
       >
-        Register
+        {loading ? "Registering..." : "Register"}
       </button>
     </form>
   );

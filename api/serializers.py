@@ -2,38 +2,52 @@ from rest_framework import serializers
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.models import Group
 
 from .models import Product
 
 User = get_user_model()
 
-# Serializer for User model
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        fields = ["id", "username", "email", "role"]
 
-# Serializer for Product model
-class ProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product
-        fields = '__all__'
-
-# Serializer for User Registration
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only = True)
-    password2 = serializers.CharField(write_only = True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
+    role = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ["username", "password", "password2", "email", "role"]
+        fields = ["username", "email", "password", "password2", "role"]
 
     def validate(self, data):
         if data["password"] != data["password2"]:
-            raise serializers.ValidationError("Password fields didn't match.")
+            raise serializers.ValidationError("Passwords do not match.")
         return data
 
     def create(self, validated_data):
-        validate_password.pop("password2")
-        user = User.objects.create_user(**validated_data)
+        password = validated_data.pop("password")
+        validated_data.pop("password2")
+        role = validated_data.pop("role")
+
+        # Create user
+        user = User.objects.create_user(
+            **validated_data,
+            password=password
+        )
+
+        # Assign role to group
+        try:
+            group = Group.objects.get(name=role)
+        except Group.DoesNotExist:
+            raise serializers.ValidationError(f"Role '{role}' does not exist.")
+        user.groups.add(group)
+
         return user
+    
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = "__all__"

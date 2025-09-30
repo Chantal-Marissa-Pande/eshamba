@@ -1,80 +1,63 @@
-from rest_framework import generics
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import status
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
-from django.contrib.auth import get_user_model, authenticate
-from django.shortcuts import render
-from django.http import HttpResponse
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Product
-from .serializers import UserSerializer, ProductSerializer, RegisterSerializer
+from .serializers import UserSerializer, RegisterSerializer, ProductSerializer
 
 User = get_user_model()
-
-# List users
-class UserListView(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-# Product CRUD
-class ProductListCreateView(generics.ListCreateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
-
-class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
 
 # User Registration
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+# Login view (JWT)
+class LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
 
-        refresh = RefreshToken.for_user(user)
+    def post(self, request):
+        from django.contrib.auth import authenticate
 
-        return Response({
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "role": user.role,
-            },
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }, status=status.HTTP_201_CREATED)
-
-
-# User login
-class LoginView(generics.GenericAPIView):
-
-    def post(self, request, *args, **kwargs):
         username = request.data.get("username")
         password = request.data.get("password")
-        user = authenticate(username=username, password=password)
 
+        user = authenticate(username=username, password=password)
         if user is not None:
             refresh = RefreshToken.for_user(user)
             return Response({
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
                 "username": user.username,
-                "email": user.email,
-                "role": user.role,
+                "role": user.groups.first().name if user.groups.exists() else None,
             })
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
+# User list (Admin-only)
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
 
-# Landing page function
+# Product list & create
+class ProductListCreateView(generics.ListCreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+# Product detail (update/delete)
+class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+# Landing Page
+from django.http import JsonResponse
+
 def landing_page(request):
-    return HttpResponse("<h1>Welcome to EShamba</h1>")
+    return JsonResponse({"message": "Welcome to the landing page!"})

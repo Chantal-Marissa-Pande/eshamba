@@ -2,77 +2,75 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api";
 
-function Login({ setUser, setMessage }) {
-  const [form, setForm] = useState({ username: "", password: "" });
+export default function Login() {
+  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     try {
-      const data = await login({
-        username: form.username,
-        password: form.password,
-      });
+      const data = await login(formData);
 
-      // Save auth details
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("username", data.username);
-      localStorage.setItem("role", data.role);
+      // Tokens already stored in localStorage by api.js
+      console.log("Login successful:", data);
 
-      setUser(data.username);
-      setMessage("✅ Logged in successfully!");
-
-      // Redirect by role
-      if (data.role === "farmer") navigate("/farmer-dashboard");
-      else if (data.role === "vendor") navigate("/vendor-dashboard");
-      else navigate("/dashboard");
+      // Navigate user to homepage (or dashboard)
+      navigate("/");
     } catch (err) {
-      console.error(err);
-      setMessage("❌ Login failed. Check your credentials.");
+      setError("Invalid username or password");
     }
   };
 
   return (
-    <div className="mt-6">
-      <h2 className="text-2xl font-bold">Login</h2>
-      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-        <input
-          type="text"
-          name="username"
-          value={form.username}
-          onChange={handleChange}
-          placeholder="Username"
-          className="w-full border p-2 rounded"
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          value={form.password}
-          onChange={handleChange}
-          placeholder="Password"
-          className="w-full border p-2 rounded"
-          required
-        />
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-lg rounded-lg p-8 w-96"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+
+        {error && (
+          <div className="bg-red-100 text-red-600 p-2 rounded mb-4">{error}</div>
+        )}
+
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-1">Username</label>
+          <input
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-gray-700 mb-1">Password</label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+          />
+        </div>
+
         <button
           type="submit"
-          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
         >
           Login
         </button>
       </form>
-      <p className="mt-4 text-sm">
-        Don’t have an account?{" "}
-        <a href="/register" className="text-green-700 font-semibold">
-          Register
-        </a>
-      </p>
     </div>
   );
 }
-
-export default Login;
