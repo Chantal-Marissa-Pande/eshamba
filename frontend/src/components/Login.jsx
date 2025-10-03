@@ -41,7 +41,7 @@ export default function Login() {
         )}
 
         <div className="mb-4">
-          <label className="block text-gray-700 mb-1">Username</label>
+          <label className="block text-gray-700 mb-1">Username: </label>
           <input
             type="text"
             name="username"
@@ -53,7 +53,7 @@ export default function Login() {
         </div>
 
         <div className="mb-6">
-          <label className="block text-gray-700 mb-1">Password</label>
+          <label className="block text-gray-700 mb-1">Password: </label>
           <input
             type="password"
             name="password"
