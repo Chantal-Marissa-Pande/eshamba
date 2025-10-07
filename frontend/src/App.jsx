@@ -1,9 +1,3 @@
-const [user, setUser] = useState(
-  localStorage.getItem("username") || 
-  sessionStorage.getItem("username") || 
-  null
-);
-
 import "./App.css";
 import React, { useState, useEffect } from "react";
 import {
@@ -24,7 +18,7 @@ import VendorDashboard from "./components/VendorDashboard";
 import { createProduct } from "./api";
 
 function App() {
-  const [user, setUser] = useState(localStorage.getItem("username") || null);
+  const [user, setUser] = useState(localStorage.getItem("username") || sessionStorage.getItem("username") || null);
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
