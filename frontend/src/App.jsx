@@ -1,9 +1,14 @@
+const [user, setUser] = useState(
+  localStorage.getItem("username") || sessionStorage.getItem("username") || null
+);
+
 import "./App.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 
 import Header from "./components/Header";
@@ -20,11 +25,22 @@ function App() {
   const [user, setUser] = useState(localStorage.getItem("username") || null);
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+
+  // ✅ Auto-login if user already exists in localStorage
+  useEffect(() => {
+    const savedUser = localStorage.getItem("username");
+    if (savedUser) {
+      setUser(savedUser);
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.clear();
     setUser(null);
     setMessage("👋 You have logged out.");
+    navigate("/"); // back to landing
   };
 
   return (
@@ -54,7 +70,7 @@ function App() {
             user ? (
               <Navigate to="/dashboard" />
             ) : (
-              <Register setMessage={setMessage} />
+              <Register setUser={setUser} setMessage={setMessage} />
             )
           }
         />
@@ -62,7 +78,7 @@ function App() {
         <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
         <Route path="/vendor-dashboard" element={<VendorDashboard />} />
 
-        {/* ✅ Protected route */}
+        {/* ✅ Protected dashboard route */}
         <Route
           path="/dashboard"
           element={

@@ -12,10 +12,22 @@ from .serializers import UserSerializer, RegisterSerializer, ProductSerializer
 User = get_user_model()
 
 # User Registration
-class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "message": "User registered successfully",
+            "username": user.username,
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "role": user.groups.first().name if user.groups.exists() else None,
+        }, status=status.HTTP_201_CREATED)
 
 # Login view (JWT)
 class LoginView(APIView):

@@ -17,24 +17,20 @@ API.interceptors.request.use((config) => {
 
 // Register new user
 export const register = async (formData) => {
-  try {
     const res = await API.post("register/", formData);
-    // Django serializer returns created user (username, email, etc.)
+
+    // Saving tokens
+    localStorage.setItem("access", res.data.access);
+    localStorage.setItem("refresh", res.data.refresh);
     return res.data;
-  } catch (err) {
-    throw err.response?.data || err;
-  }
 };
 
 // Login user
 export const login = async (formData) => {
-  try {
     const res = await API.post("login/", formData);
-    // Django returns: { access, refresh, username, role }
+    localStorage.setItem("access", res.data.access);
+    localStorage.setItem("refresh", res.data.refresh);
     return res.data;
-  } catch (err) {
-    throw err.response?.data || err;
-  }
 };
 
 // Refresh token
