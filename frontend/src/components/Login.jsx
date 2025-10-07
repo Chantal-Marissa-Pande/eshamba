@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login as loginAPI } from "../api";
 
 function Login({ setUser, setMessage }) {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -10,22 +11,23 @@ function Login({ setUser, setMessage }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      // ✅ Authenticate against Django backend
+      const res = await loginAPI(formData);
 
-    if (formData.username && formData.password) {
-      // ✅ Save in chosen storage
-      if (remember) {
-        localStorage.setItem("username", formData.username);
-      } else {
-        sessionStorage.setItem("username", formData.username);
-      }
+      // Save token + username
+      const storage = remember ? localStorage : sessionStorage;
+      storage.setItem("access", res.access);
+      storage.setItem("refresh", res.refresh);
+      storage.setItem("username", res.username);
 
-      setUser(formData.username);
+      setUser(res.username);
       setMessage("✅ Login successful!");
       navigate("/dashboard");
-    } else {
-      setMessage("❌ Invalid username or password.");
+    } catch (err) {
+      setMessage("❌ Login failed: " + JSON.stringify(err));
     }
   };
 
@@ -49,7 +51,6 @@ function Login({ setUser, setMessage }) {
         className="w-full p-2 mb-3 border rounded"
       />
 
-      {/* Stay logged in */}
       <label className="flex items-center mb-3">
         <input
           type="checkbox"

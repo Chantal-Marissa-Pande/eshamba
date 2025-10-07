@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { register as registerAPI, login as loginAPI } from "../api";
 
 function Register({ setUser, setMessage }) {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -10,22 +11,26 @@ function Register({ setUser, setMessage }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      // ✅ Register user in Django backend
+      await registerAPI(formData);
 
-    if (formData.username && formData.password) {
-      // ✅ Save in chosen storage
-      if (remember) {
-        localStorage.setItem("username", formData.username);
-      } else {
-        sessionStorage.setItem("username", formData.username);
-      }
+      // ✅ Immediately log them in
+      const res = await loginAPI(formData);
 
-      setUser(formData.username);
-      setMessage("✅ Registration successful!");
+      // Save token + username
+      const storage = remember ? localStorage : sessionStorage;
+      storage.setItem("access", res.access);
+      storage.setItem("refresh", res.refresh);
+      storage.setItem("username", res.username);
+
+      setUser(res.username);
+      setMessage("✅ Registration successful, you are now logged in!");
       navigate("/dashboard");
-    } else {
-      setMessage("❌ Please fill all fields.");
+    } catch (err) {
+      setMessage("❌ Registration failed: " + JSON.stringify(err));
     }
   };
 
@@ -49,7 +54,6 @@ function Register({ setUser, setMessage }) {
         className="w-full p-2 mb-3 border rounded"
       />
 
-      {/* Stay logged in */}
       <label className="flex items-center mb-3">
         <input
           type="checkbox"

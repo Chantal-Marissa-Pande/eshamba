@@ -1,5 +1,7 @@
 const [user, setUser] = useState(
-  localStorage.getItem("username") || sessionStorage.getItem("username") || null
+  localStorage.getItem("username") || 
+  sessionStorage.getItem("username") || 
+  null
 );
 
 import "./App.css";
