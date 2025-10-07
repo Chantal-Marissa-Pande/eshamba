@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { register } from "../api";
 import { useNavigate } from "react-router-dom";
+import { UserPlus } from "lucide-react";
 
 function Register({ setMessage, setUser }) {
   const navigate = useNavigate();
@@ -24,99 +25,92 @@ function Register({ setMessage, setUser }) {
     try {
       const res = await register(form);
       setMessage("✅ Registration successful! Please log in.");
-      setUser(res.data.username);
+      setUser(res.username);
       navigate("/login");
     } catch (err) {
-      console.error("Registration error:", err.response?.data || err.message);
-      if (err.response?.data) {
-        setMessage("❌ " + JSON.stringify(err.response.data));
-      } else {
-        setMessage("❌ Registration failed.");
-      }
+      setMessage("❌ " + (err.response?.data || "Registration failed"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-400 to-green-600 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 via-green-600 to-green-800 relative overflow-hidden font-sans">
+      {/* Background Circles */}
+      <div className="absolute w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 top-16 left-10 animate-pulse"></div>
+      <div className="absolute w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 bottom-16 right-10 animate-pulse"></div>
+
+      {/* Glass Card */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md relative z-10"
+        className="relative z-10 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-10 w-96 text-white border border-white/20 space-y-4"
       >
-        <h2 className="text-3xl font-bold text-green-700 mb-6 text-center">
-          Create Your Account
+        <h2 className="text-3xl font-extrabold mb-6 text-center flex items-center justify-center gap-2">
+          <UserPlus /> Register
         </h2>
 
-        <div className="space-y-4">
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={form.username}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-            required
-          />
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={form.username}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-gray-200 focus:ring-2 focus:ring-green-400 focus:outline-none"
+        />
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-            required
-          />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-gray-200 focus:ring-2 focus:ring-green-400 focus:outline-none"
+        />
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-            required
-          />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-gray-200 focus:ring-2 focus:ring-green-400 focus:outline-none"
+        />
 
-          <input
-            type="password"
-            name="password2"
-            placeholder="Confirm Password"
-            value={form.password2}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-            required
-          />
+        <input
+          type="password"
+          name="password2"
+          placeholder="Confirm Password"
+          value={form.password2}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-gray-200 focus:ring-2 focus:ring-green-400 focus:outline-none"
+        />
 
-          <select
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-          >
-            <option value="farmer">🌱 Farmer</option>
-            <option value="vendor">🏪 Vendor</option>
-          </select>
+        <select
+          name="role"
+          value={form.role}
+          onChange={handleChange}
+          className="w-full px-4 py-2 rounded-lg bg-white/20 text-white focus:ring-2 focus:ring-green-400 focus:outline-none"
+        >
+          <option value="farmer" className="text-black">
+            🌱 Farmer
+          </option>
+          <option value="vendor" className="text-black">
+            🏪 Vendor
+          </option>
+        </select>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition shadow-lg"
-          >
-            {loading ? "Registering..." : "Register"}
-          </button>
-        </div>
-
-        <p className="mt-6 text-sm text-center text-gray-600">
-          Already have an account?{" "}
-          <span
-            className="text-green-600 font-semibold cursor-pointer hover:underline"
-            onClick={() => navigate("/login")}
-          >
-            Login
-          </span>
-        </p>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-semibold rounded-xl shadow-lg transform hover:scale-105 hover:shadow-green-500/40 transition-all"
+        >
+          <UserPlus size={18} />
+          {loading ? "Registering..." : "Register"}
+        </button>
       </form>
     </div>
   );
