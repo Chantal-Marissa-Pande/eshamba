@@ -17,59 +17,67 @@ export default function Login() {
 
     try {
       const data = await login(formData);
-
-      // Tokens already stored in localStorage by api.js
       console.log("Login successful:", data);
-
-      // Navigate user to homepage (or dashboard)
       navigate("/");
     } catch (err) {
-      setError("Invalid username or password");
+      setError("❌ Invalid username or password");
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-400 to-blue-600 px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-lg p-8 w-96"
+        className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md relative z-10"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+        <h2 className="text-3xl font-bold text-blue-700 mb-6 text-center">
+          Welcome Back!
+        </h2>
 
         {error && (
-          <div className="bg-red-100 text-red-600 p-2 rounded mb-4">{error}</div>
+          <div className="bg-red-100 text-red-600 p-3 rounded-lg mb-4 text-sm">
+            {error}
+          </div>
         )}
 
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-1">Username: </label>
+        <div className="space-y-4">
           <input
             type="text"
             name="username"
+            placeholder="Username"
             value={formData.username}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-        </div>
 
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-1">Password: </label>
           <input
             type="password"
             name="password"
+            placeholder="Password"
             value={formData.password}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition shadow-lg"
+          >
+            Login
+          </button>
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Login
-        </button>
+        <p className="mt-6 text-sm text-center text-gray-600">
+          Don’t have an account?{" "}
+          <span
+            className="text-blue-600 font-semibold cursor-pointer hover:underline"
+            onClick={() => navigate("/register")}
+          >
+            Register
+          </span>
+        </p>
       </form>
     </div>
   );
