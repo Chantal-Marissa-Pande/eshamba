@@ -14,27 +14,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
-
+   
     class Meta:
         model = User
-        fields = ["username", "password", "password2", "role"]
-
-    def validate(self, data):
-        if data["password"] != data["password2"]:
-            raise serializers.ValidationError("Passwords do not match.")
-        return data
+        fields = ["username", "password", "role"]
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        validated_data.pop("password2")
         role = validated_data.get("role", "farmer")
 
         # Create user
         user = User.objects.create_user(
             **validated_data,
-            password=password,
-            role=role
+            password=password
         )
 
         # Assign role to group (optional)

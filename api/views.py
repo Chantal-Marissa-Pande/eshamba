@@ -17,10 +17,13 @@ class RegisterView(APIView):
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            print("❌ Registration error details:", serializer.errors)
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+        
         user = serializer.save()
-
         refresh = RefreshToken.for_user(user)
+        
         return Response({
             "message": "User registered successfully",
             "username": user.username,
