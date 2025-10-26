@@ -1,23 +1,18 @@
-import React from "react";
+<div className="max-w-3xl mx-auto mt-10">
+  <h2 className="text-2xl font-semibold text-green-800 flex items-center mb-4">
+    <span className="text-amber-600 mr-2">📦</span> My Products
+  </h2>
 
-function ProductList({ products }) {
-  return (
-    <section className="mt-8">
-      <h2 className="text-2xl font-semibold text-brown-700">📦 Products</h2>
-      <ul className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.length > 0 ? (
-          products.map((p) => (
-            <li key={p.id} className="bg-white p-4 rounded-lg shadow flex justify-between border border-yellow-200">
-              <span className="font-medium">{p.name}</span>
-              <span className="text-green-700 font-semibold">Ksh {p.price}</span>
-            </li>
-          ))
-        ) : (
-          <p className="col-span-full text-gray-500">No products found.</p>
-        )}
-      </ul>
-    </section>
-  );
-}
-
-export default ProductList;
+  {products.length === 0 ? (
+    <p className="text-gray-500 italic text-center">No products found.</p>
+  ) : (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {products.map((product) => (
+        <div key={product.id} className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-lg transition">
+          <h3 className="text-lg font-medium text-green-700">{product.name}</h3>
+          <p className="text-gray-600">💰 KSh {product.price}</p>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
