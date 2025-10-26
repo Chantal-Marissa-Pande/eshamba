@@ -1,9 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.conf import settings
 
-# Custom user model
+
 class User(AbstractUser):
+    """
+    Custom user model that supports 'farmer' and 'vendor' roles.
+    """
     ROLE_CHOICES = [
         ('farmer', 'Farmer'),
         ('vendor', 'Vendor'),
@@ -11,17 +13,22 @@ class User(AbstractUser):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='farmer')
 
     def __str__(self):
-        return self.username
+        return f"{self.username} ({self.role})"
+
 
 class Product(models.Model):
+    """
+    Represents a product created by a farmer.
+    Vendors can view or purchase products.
+    """
     name = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField()
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.CASCADE,
-        related_name="products"
+        related_name='products'
     )
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.owner.username}"
