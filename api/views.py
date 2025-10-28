@@ -7,11 +7,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Product
 from .serializers import UserSerializer, RegisterSerializer, ProductSerializer
 from django.http import JsonResponse
+from django.contrib.auth import authenticate
 
 User = get_user_model()
 
 
-# 🌱 User Registration
+# User Registration
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -33,36 +34,32 @@ class RegisterView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
-# 🔐 Login View (JWT)
+# Login View (JWT)
 class LoginView(APIView):
-    permission_classes = [permissions.AllowAny]
-
     def post(self, request):
-        from django.contrib.auth import authenticate
-
         username = request.data.get("username")
         password = request.data.get("password")
 
         user = authenticate(username=username, password=password)
-        if user:
+        if user is not None:
             refresh = RefreshToken.for_user(user)
             return Response({
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
                 "username": user.username,
                 "role": user.role
-            })
+            }, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-# 👤 Admin-only User List
+# Admin-only User List
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
 
-# 🛒 Product Create/List
+# Product Create/List
 class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -79,13 +76,13 @@ class ProductListCreateView(generics.ListCreateAPIView):
         serializer.save(owner=self.request.user)
 
 
-# ✏️ Product Detail (View/Update/Delete)
+# Product Detail (View/Update/Delete)
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
-# 🌍 Landing Page
+# Landing Page
 def landing_page(request):
     return JsonResponse({"message": "Welcome to the E-Shamba API!"})
