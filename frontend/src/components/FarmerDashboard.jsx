@@ -70,15 +70,22 @@ function FarmerDashboard() {
           <CardTitle className="text-2xl font-semibold text-green-700 flex items-center gap-2">
             <Sprout className="w-6 h-6 text-green-600" /> Farmer Dashboard
           </CardTitle>
+          <br />
+
           <CardDescription className="text-gray-500 text-center">
             Manage your farm products and monitor sales easily
           </CardDescription>
+          <br />
+
         </CardHeader>
 
         <CardContent>
           <Tabs defaultValue="products" className="w-full mt-4">
             <TabsList className="flex justify-center mb-4">
               <TabsTrigger value="products">My Products</TabsTrigger>
+              <br />
+              <br />
+
               <TabsTrigger value="add">Add Product</TabsTrigger>
             </TabsList>
 
@@ -123,7 +130,7 @@ function FarmerDashboard() {
               >
                 <div>
                   <label className="block text-gray-600 font-medium mb-1">
-                    Product Name
+                    Product Name: 
                   </label>
                   <Input
                     type="text"
@@ -137,7 +144,7 @@ function FarmerDashboard() {
 
                 <div>
                   <label className="block text-gray-600 font-medium mb-1">
-                    Price (Ksh)
+                    Price (Ksh): 
                   </label>
                   <Input
                     type="number"
@@ -151,7 +158,7 @@ function FarmerDashboard() {
 
                 <div>
                   <label className="block text-gray-600 font-medium mb-1">
-                    Quantity
+                    Quantity:
                   </label>
                   <Input
                     type="number"

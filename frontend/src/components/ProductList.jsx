@@ -1,26 +1,32 @@
 import React from "react";
+import { Package } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 
 function ProductList({ products }) {
   return (
-    <div className="max-w-3xl mx-auto mt-10">
-      <h2 className="text-2xl font-semibold text-green-800 flex items-center mb-4">
-        <span className="text-amber-600 mr-2">📦</span> My Products
+    <div className="max-w-5xl mx-auto mt-10">
+      <h2 className="text-2xl font-semibold text-green-800 flex items-center gap-2 mb-6">
+        <Package className="text-green-600 w-6 h-6" /> My Products
       </h2>
 
       {products.length === 0 ? (
         <p className="text-gray-500 italic text-center">No products found.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
-            <div
+            <Card
               key={product.id}
-              className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-lg transition"
+              className="hover:shadow-lg transition border-green-100"
             >
-              <h3 className="text-lg font-medium text-green-700">
-                {product.name}
-              </h3>
-              <p className="text-gray-600">💰 KSh {product.price}</p>
-            </div>
+              <CardHeader>
+                <CardTitle className="text-green-700">{product.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 font-medium">
+                  💰 KSh {product.price}
+                </p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

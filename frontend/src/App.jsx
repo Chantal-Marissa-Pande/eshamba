@@ -25,9 +25,17 @@ function App() {
 
   // ✅ Auto-login if user already exists in localStorage
   useEffect(() => {
-    const savedUser = localStorage.getItem("username");
+    const savedUser = localStorage.getItem("username")|| sessionStorage.getItem("username");
+    const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+
     if (savedUser) {
       setUser(savedUser);
+      if (role === "farmer") {
+        navigate("/farmer-dashboard");
+      }
+      else if (role === "vendor") {
+        navigate("/vendor-dashboard");
+      } else
       navigate("/dashboard");
     }
   }, [navigate]);

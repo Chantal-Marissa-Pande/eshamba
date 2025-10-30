@@ -1,42 +1,34 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { LogOut, Sprout } from "lucide-react";
+import { Button } from "./ui/button";
 
 function Header({ user, onLogout }) {
   const navigate = useNavigate();
-
-  if (!user) {
-    return (
-      <header className="flex justify-between items-center py-4 px-6 bg-green-700 text-white rounded-xl shadow-md">
-        <h1 className="text-xl font-bold">🌱 E-Shamba</h1>
-      </header>
-    );
-  }
-
-  // Fetch role + emoji
   const role = localStorage.getItem("role") || sessionStorage.getItem("role");
-  const roleEmoji =
-    role === "farmer" ? "👩‍🌾" : role === "vendor" ? "🛒" : "👤";
+  const roleEmoji = role === "farmer" ? "👩‍🌾" : role === "vendor" ? "🛒" : "👤";
 
   return (
     <header className="flex justify-between items-center py-4 px-6 bg-green-700 text-white rounded-xl shadow-md">
-      <h1
+      <div
         onClick={() => navigate("/")}
-        className="text-xl font-bold cursor-pointer hover:opacity-90"
+        className="flex items-center gap-2 cursor-pointer hover:opacity-90"
       >
-        🌱 E-Shamba
-      </h1>
-
-      <div className="flex items-center gap-4">
-        <span className="font-medium">
-          {roleEmoji} {user} ({role})
-        </span>
-        <button
-          onClick={onLogout}
-          className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg shadow-md"
-        >
-          Logout
-        </button>
       </div>
+
+      {user ? (
+        <div className="flex items-center gap-4">
+          <span className="font-medium">
+            {roleEmoji} {user} ({role})
+          </span>
+          <Button
+            onClick={onLogout}
+            className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-1"
+          >
+            <LogOut size={16} /> Logout
+          </Button>
+        </div>
+      ) : null}
     </header>
   );
 }

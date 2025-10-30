@@ -1,4 +1,8 @@
 import React, { useState } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 
 function ProductForm({ onAddProduct }) {
   const [name, setName] = useState("");
@@ -6,7 +10,6 @@ function ProductForm({ onAddProduct }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!name || !price) {
       alert("Please fill in all fields!");
       return;
@@ -24,46 +27,48 @@ function ProductForm({ onAddProduct }) {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white shadow-md rounded-2xl p-6 mt-8">
-      <h2 className="text-2xl font-semibold text-green-800 flex items-center mb-4">
-        <span className="text-green-600 mr-2">➕</span> Add New Product
-      </h2>
+    <Card className="max-w-md mx-auto mt-8 shadow-lg">
+      <CardHeader className="flex items-center justify-center">
+        <CardTitle className="text-green-700 flex items-center gap-2 text-xl">
+          <Plus className="w-5 h-5 text-green-600" /> Add New Product
+        </CardTitle>
+      </CardHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-gray-700 text-sm font-medium mb-1">
-            Product Name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter product name"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-          />
-        </div>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-1">
+              Product Name
+            </label>
+            <Input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter product name"
+            />
+          </div>
 
-        <div>
-          <label className="block text-gray-700 text-sm font-medium mb-1">
-            Price (KSh)
-          </label>
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="Enter price"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-          />
-        </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-1">
+              Price (KSh)
+            </label>
+            <Input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Enter price"
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 transition"
-        >
-          Add Product
-        </button>
-      </form>
-    </div>
+          <Button
+            type="submit"
+            className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> Add Product
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 
