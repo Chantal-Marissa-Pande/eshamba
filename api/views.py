@@ -1,26 +1,27 @@
 from django.http import JsonResponse
-from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
-
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .models import Product, Cart
-
-from .serializers import UserSerializer, RegisterSerializer, ProductSerializer, CartSerializer
-
-from django.http import JsonResponse
-from django.contrib.auth import authenticate
+from .serializers import (
+    UserSerializer,
+    RegisterSerializer,
+    ProductSerializer,
+    CartSerializer
+)
 
 User = get_user_model()
 
 
+# -----------------------------
 # User Registration
+# -----------------------------
 class RegisterView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -40,8 +41,12 @@ class RegisterView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
-# Login View (JWT)
+# -----------------------------
+# Login (JWT)
+# -----------------------------
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -58,20 +63,33 @@ class LoginView(APIView):
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-# Admin-only User List
+# -----------------------------
+# User List (open for now)
+# -----------------------------
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [AllowAny]
 
 
+# -----------------------------
 # Product Create/List
+# -----------------------------
 class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        # Allow anyone to view, but only authenticated users to add
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
+        # If unauthenticated → show all products
+        if not user.is_authenticated:
+            return Product.objects.all()
+
         if user.role == 'farmer':
             return Product.objects.filter(owner=user)
         elif user.role == 'vendor':
@@ -82,24 +100,31 @@ class ProductListCreateView(generics.ListCreateAPIView):
         serializer.save(owner=self.request.user)
 
 
-# Product Detail (View/Update/Delete)
+# -----------------------------
+# Product Detail
+# -----------------------------
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
 
-# Landing Page
-def landing_page(request):
-    return JsonResponse({"message": "Welcome to the E-Shamba API!"})
-
-# Cart views
+# -----------------------------
+# Cart Views
+# -----------------------------
 class CartListCreateView(generics.ListCreateAPIView):
     serializer_class = CartSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Cart.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+# -----------------------------
+# Landing Page
+# -----------------------------
+def landing_page(request):
+    return JsonResponse({"message": "Welcome to the E-Shamba API!"})
