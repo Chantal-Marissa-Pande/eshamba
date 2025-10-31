@@ -1,186 +1,178 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import {
-  Plus,
-  Package,
-  Sprout,
-  ShoppingCart,
-} from "lucide-react";
-
+import { Package, PlusCircle } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "./ui/card";
 import { Input } from "./ui/input";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "./ui/tabs";
 
 function FarmerDashboard() {
   const [products, setProducts] = useState([]);
-  const [newProduct, setNewProduct] = useState({ name: "", price: "", quantity: "" });
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
+  // ✅ Fetch products belonging to the logged-in farmer
   useEffect(() => {
-    fetchProducts();
+    fetch("http://localhost:8000/api/products/")
+      .then((res) => res.json())
+      .then((data) => setProducts(data))
+      .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-  const fetchProducts = async () => {
+  // ✅ Handle adding a new product
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    if (!name || !price) {
+      alert("Please fill in all fields!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("price", price);
+    if (image) formData.append("image", image);
+
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/products/");
-      setProducts(response.data);
+      const response = await fetch("http://localhost:8000/api/products/", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Failed to add product");
+
+      const savedProduct = await response.json();
+      setProducts([...products, savedProduct]);
+      setMessage("✅ Product added successfully!");
+      setName("");
+      setPrice("");
+      setImage(null);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      setMessage("❌ Error adding product: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    setNewProduct({ ...newProduct, [e.target.name]: e.target.value });
-  };
-
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
-    if (!newProduct.name || !newProduct.price || !newProduct.quantity) {
-      alert("Please fill all fields");
-      return;
-    }
-    try {
-      await axios.post("http://127.0.0.1:8000/api/products/", newProduct);
-      setNewProduct({ name: "", price: "", quantity: "" });
-      fetchProducts();
-    } catch (error) {
-      console.error("Error adding product:", error);
-    }
-  };
+  // ✅ Calculate total value
+  const totalValue = products.reduce(
+    (sum, item) => sum + parseFloat(item.price || 0),
+    0
+  );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <Card className="max-w-4xl mx-auto shadow-lg">
-        <CardHeader className="flex flex-col items-center gap-2">
-          <CardTitle className="text-2xl font-semibold text-green-700 flex items-center gap-2">
-            <Sprout className="w-6 h-6 text-green-600" /> Farmer Dashboard
+    <div className="max-w-6xl mx-auto mt-10">
+      <h2 className="text-3xl font-semibold text-green-800 flex items-center gap-2 mb-6">
+        <Package className="text-green-600 w-7 h-7" /> Farmer Dashboard
+      </h2>
+
+      {/* Add Product Form */}
+      <Card className="mb-8 shadow-md border-green-100">
+        <CardHeader>
+          <CardTitle className="text-green-700 flex items-center gap-2 text-xl">
+            <PlusCircle className="w-5 h-5 text-green-600" /> Add New Produce
           </CardTitle>
-          <br />
-
-          <CardDescription className="text-gray-500 text-center">
-            Manage your farm products and monitor sales easily
-          </CardDescription>
-          <br />
-
         </CardHeader>
-
         <CardContent>
-          <Tabs defaultValue="products" className="w-full mt-4">
-            <TabsList className="flex justify-center mb-4">
-              <TabsTrigger value="products">My Products</TabsTrigger>
-              <br />
-              <br />
+          <form onSubmit={handleAddProduct} className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Produce Name
+              </label>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter produce name"
+              />
+            </div>
 
-              <TabsTrigger value="add">Add Product</TabsTrigger>
-            </TabsList>
+            <div>
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Price (KSh)
+              </label>
+              <Input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="Enter price"
+              />
+            </div>
 
-            {/* Product List Tab */}
-            <TabsContent value="products">
-              {loading ? (
-                <p className="text-center text-gray-500">Loading products...</p>
-              ) : products.length === 0 ? (
-                <p className="text-center text-gray-400">No products added yet.</p>
-              ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                  {products.map((product) => (
-                    <Card
-                      key={product.id}
-                      className="border border-green-100 hover:shadow-md transition"
-                    >
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-green-700">
-                          <Package className="w-5 h-5 text-green-600" /> {product.name}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-gray-600">Price: Ksh {product.price}</p>
-                        <p className="text-gray-600">Quantity: {product.quantity}</p>
-                        <div className="mt-2">
-                          <Button variant="outline" className="w-full flex items-center gap-2">
-                            <ShoppingCart className="w-4 h-4" /> View Sales
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+            <div>
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Image
+              </label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImage(e.target.files[0])}
+              />
+            </div>
 
-            {/* Add Product Tab */}
-            <TabsContent value="add">
-              <form
-                onSubmit={handleAddProduct}
-                className="max-w-md mx-auto bg-white rounded-lg shadow-sm p-4 space-y-4"
+            <div className="col-span-3">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
               >
-                <div>
-                  <label className="block text-gray-600 font-medium mb-1">
-                    Product Name: 
-                  </label>
-                  <Input
-                    type="text"
-                    name="name"
-                    value={newProduct.name}
-                    onChange={handleInputChange}
-                    placeholder="e.g. Organic Tomatoes"
-                    className="border-green-200 focus:ring-green-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-600 font-medium mb-1">
-                    Price (Ksh): 
-                  </label>
-                  <Input
-                    type="number"
-                    name="price"
-                    value={newProduct.price}
-                    onChange={handleInputChange}
-                    placeholder="e.g. 150"
-                    className="border-green-200 focus:ring-green-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-600 font-medium mb-1">
-                    Quantity:
-                  </label>
-                  <Input
-                    type="number"
-                    name="quantity"
-                    value={newProduct.quantity}
-                    onChange={handleInputChange}
-                    placeholder="e.g. 50"
-                    className="border-green-200 focus:ring-green-500"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-4 h-4" /> Add Product
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+                {loading ? "Adding..." : "Add Produce"}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
+
+      {/* Display Message */}
+      {message && (
+        <p className="text-center text-green-700 font-semibold mb-4">
+          {message}
+        </p>
+      )}
+
+      {/* Product List */}
+      <div>
+        <h3 className="text-xl font-semibold text-green-800 mb-4">
+          My Produce
+        </h3>
+        {products.length === 0 ? (
+          <p className="text-gray-500 italic text-center">No produce found.</p>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map((product) => (
+              <Card
+                key={product.id}
+                className="hover:shadow-lg transition border-green-100"
+              >
+                <CardHeader>
+                  <CardTitle className="text-green-700">{product.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {product.image && (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-40 object-cover rounded-md border"
+                    />
+                  )}
+                  <p className="text-gray-600 font-medium">
+                    💰 KSh {product.price}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Total Value */}
+      {products.length > 0 && (
+        <div className="mt-8 p-4 bg-gray-50 rounded-md shadow-md text-lg font-semibold text-green-800 flex justify-between">
+          <span>Total Value of Produce:</span>
+          <span>KSh {totalValue.toFixed(2)}</span>
+        </div>
+      )}
     </div>
   );
 }

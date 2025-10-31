@@ -104,35 +104,59 @@ function App() {
 
 // Dashboard component
 function Dashboard({ products, setProducts, setMessage }) {
-  const [newProduct, setNewProduct] = useState({ name: "", price: "" });
+  // ✅ Fetch products from backend when the dashboard loads
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/products/");
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+    fetchProducts();
+  }, [setProducts]);
 
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
+  // ✅ Add product to backend
+  const handleAddProduct = async (newProduct) => {
     try {
-      const res = await createProduct(newProduct);
-      setProducts([...products, res.data]);
-      setNewProduct({ name: "", price: "" });
+      const response = await fetch("http://localhost:8000/api/products/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProduct),
+      });
+
+      if (!response.ok) throw new Error("Failed to add product");
+
+      const savedProduct = await response.json();
+      setProducts([...products, savedProduct]);
       setMessage("✅ Product added successfully!");
-    } catch {
+    } catch (error) {
       setMessage("❌ Failed to add product.");
     }
   };
 
+  // ✅ Calculate total cost of all products
+  const totalCost = products.reduce((acc, p) => acc + Number(p.price || 0), 0);
+
   return (
     <div className="mt-6">
-      <p className="text-lg">
+      <p className="text-lg mb-4">
         👋 Welcome,{" "}
-        <span className="font-semibold">{localStorage.getItem("username")}</span>
-        !
+        <span className="font-semibold">{localStorage.getItem("username")}</span>!
       </p>
-      <ProductForm
-        newProduct={newProduct}
-        onChange={(e) =>
-          setNewProduct({ ...newProduct, [e.target.name]: e.target.value })
-        }
-        onAdd={handleAddProduct}
-      />
+
+      {/* Add new product form */}
+      <ProductForm onAddProduct={handleAddProduct} />
+
+      {/* Show all products */}
       <ProductList products={products} />
+
+      {/* ✅ Total cost display */}
+      <div className="mt-8 text-xl text-green-700 font-semibold text-center">
+        Total Value of Products: KSh {totalCost.toLocaleString()}
+      </div>
     </div>
   );
 }

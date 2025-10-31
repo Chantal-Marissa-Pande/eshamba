@@ -6,6 +6,7 @@ from .views import (
     ProductDetailView,
     RegisterView,
     LoginView,
+    CartListCreateView,
     landing_page
 )
 
@@ -22,4 +23,7 @@ urlpatterns = [
 
     # Landing
     path('', landing_page, name='landing'),
+
+    # Cart
+    path('cart/', CartListCreateView.as_view(), name='cart'),
 ]

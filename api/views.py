@@ -1,11 +1,17 @@
+from django.http import JsonResponse
+from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Product
-from .serializers import UserSerializer, RegisterSerializer, ProductSerializer
+
+from .models import Product, Cart
+
+from .serializers import UserSerializer, RegisterSerializer, ProductSerializer, CartSerializer
+
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
 
@@ -86,3 +92,14 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 # Landing Page
 def landing_page(request):
     return JsonResponse({"message": "Welcome to the E-Shamba API!"})
+
+# Cart views
+class CartListCreateView(generics.ListCreateAPIView):
+    serializer_class = CartSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

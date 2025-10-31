@@ -68,3 +68,15 @@ export const deleteProduct = async (id) => {
   const res = await API.delete(`products/${id}/`);
   return res.data;
 };
+
+// CART APIs
+// Add to cart
+export const addToCart = async (productId, quantity = 1) => {
+  const res = await API.post("cart/", { product: productId, quantity });
+  return res.data;
+};
+// Get cart items
+export const getCartItems = async () => {
+  const res = await API.get("cart/");
+  return res.data;
+};

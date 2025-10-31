@@ -20,7 +20,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField()
     owner = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='products'
     )
@@ -29,3 +29,16 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.owner.username}"
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    @property
+    def total_price(self):
+        return self.product.price * self.quantity
+
+    def __str__(self):
+        return f"{self.user.username}'s cart: {self.product.name} x{self.quantity}"

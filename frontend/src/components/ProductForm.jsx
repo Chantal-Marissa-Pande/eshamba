@@ -7,23 +7,43 @@ import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 function ProductForm({ onAddProduct }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [image, setImage] = useState(null);
 
-  const handleSubmit = (e) => {
+  // ✅ Make handleSubmit async to use await
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!name || !price) {
       alert("Please fill in all fields!");
       return;
     }
 
-    const newProduct = {
-      id: Date.now(),
-      name,
-      price: parseFloat(price),
-    };
+    // ✅ Prepare form data
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("price", price);
+    if (image) {
+      formData.append("image", image);
+    }
 
-    onAddProduct(newProduct);
-    setName("");
-    setPrice("");
+    try {
+      const response = await fetch("http://localhost:8000/api/products/", {
+        method: "POST",
+        body: formData, // No need for Content-Type when using FormData
+      });
+
+      if (!response.ok) throw new Error("Failed to add product");
+
+      const savedProduct = await response.json();
+
+      // ✅ Notify parent and reset form
+      onAddProduct(savedProduct);
+      setName("");
+      setPrice("");
+      setImage(null);
+    } catch (error) {
+      alert("Error adding product: " + error.message);
+    }
   };
 
   return (
@@ -57,6 +77,18 @@ function ProductForm({ onAddProduct }) {
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="Enter price"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-1">
+              Product Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImage(e.target.files[0])}
+              className="block w-full text-sm text-gray-600"
             />
           </div>
 

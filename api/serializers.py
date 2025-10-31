@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.models import Group
-from .models import Product
+from .models import Product, Cart
 
 User = get_user_model()
 
@@ -40,4 +40,11 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ["id", "name", "price", "quantity", "owner"]
+        fields = ["id", "name", "price", "quantity", "owner", "image", "created_at"]
+
+class CartSerializer(serializers.ModelSerializer):
+    total_price = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Cart
+        fields = ['id', 'user', 'product', 'quantity', 'total_price']
