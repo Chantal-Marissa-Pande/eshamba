@@ -1,0 +1,67 @@
+[
+  {
+    "model": "api.user",
+    "pk": 1,
+    "fields": {
+      "username": "admin",
+      "password": "pbkdf2_sha256$1000000$z9xO4V4rWY6j73inPUoNG7$gTxLVOUEqAi4HXviUdfK12BbA7hZfugk9q2ERLpqoQA=", 
+      "role": "administrator",
+      "is_superuser": true,
+      "is_staff": true
+    }
+  },
+  {
+    "model": "api.user",
+    "pk": 2,
+    "fields": {
+      "username": "John",
+      "password": "pbkdf2_sha256$1000000$9OcChjYmrHI0LaRFm3bUDU$VoebQ+krYWIK9EUMHwG1D1qnpkxBY+o/V9AUKokKsjY=", 
+      "role": "farmer"
+    }
+  },
+  {
+    "model": "api.user",
+    "pk": 3,
+    "fields": {
+      "username": "Mary",
+      "password": "pbkdf2_sha256$1000000$8hLY5kNJyZvCknL19L3IGd$UDI+Jswp0MXZTRKe6NU4j0pQ3CL6Q8kyAbFok5hteXc=", 
+      "role": "vendor"
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 1,
+    "fields": {
+      "name": "Fresh Tomatoes",
+      "price": "150.00",
+      "quantity": 25,
+      "owner": 2,
+      "created_at": "2025-01-01T12:00:00Z",
+      "image": "product_images/tomatoes.jpg"
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 2,
+    "fields": {
+      "name": "Organic Bananas",
+      "price": "200.00",
+      "quantity": 30,
+      "owner": 2,
+      "created_at": "2025-01-02T10:00:00Z",
+      "image": "product_images/bananas.jpg"
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 3,
+    "fields": {
+      "name": "Potato Bags",
+      "price": "800.00",
+      "quantity": 10,
+      "owner": 3,
+      "created_at": "2025-01-05T15:30:00Z",
+      "image": "product_images/potatoes.jpg"
+    }
+  }
+]
