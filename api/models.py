@@ -10,6 +10,10 @@ class User(AbstractUser):
         ('vendor', 'Vendor'),
     ]
     role = models.CharField(max_length=15, choices=ROLE_CHOICES, default='farmer')
+    email = models.EmailField(unique=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
     def __str__(self):
         return f"{self.username} ({self.role})"

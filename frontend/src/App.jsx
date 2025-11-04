@@ -1,11 +1,6 @@
 import "./App.css";
-import React, { useState, useEffect } from "react";
-import {
-  Routes,
-  Route,
-  Navigate,
-  useNavigate,
-} from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
 import Header from "./components/Header";
 import LandingPage from "./components/LandingPage";
@@ -15,113 +10,153 @@ import ProductForm from "./components/ProductForm";
 import ProductList from "./components/ProductList";
 import FarmerDashboard from "./components/FarmerDashboard";
 import VendorDashboard from "./components/VendorDashboard";
-import { createProduct } from "./api";
+
+// ✅ Use environment variable for backend URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 function App() {
-  const [user, setUser] = useState(localStorage.getItem("username") || sessionStorage.getItem("username") || null);
+  const navigate = useNavigate();
+  const [user, setUser] = useState(
+    localStorage.getItem("username") || sessionStorage.getItem("username") || null
+  );
+  const [role, setRole] = useState(
+    localStorage.getItem("role") || sessionStorage.getItem("role") || null
+  );
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState("");
-  const navigate = useNavigate();
 
-  // ✅ Auto-login if user already exists in localStorage
+  // ✅ Auto-login on refresh
   useEffect(() => {
-    const savedUser = localStorage.getItem("username")|| sessionStorage.getItem("username");
-    const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+    const savedUser = localStorage.getItem("username") || sessionStorage.getItem("username");
+    const savedRole = localStorage.getItem("role") || sessionStorage.getItem("role");
 
     if (savedUser) {
       setUser(savedUser);
-      if (role === "farmer") {
-        navigate("/farmer-dashboard");
-      }
-      else if (role === "vendor") {
-        navigate("/vendor-dashboard");
-      } else
-      navigate("/dashboard");
+      setRole(savedRole);
+
+      // redirect user based on role
+      if (savedRole === "farmer") navigate("/farmer-dashboard");
+      else if (savedRole === "vendor") navigate("/vendor-dashboard");
+      else navigate("/dashboard");
     }
   }, [navigate]);
 
-  const handleLogout = () => {
+  // ✅ Logout handler
+  const handleLogout = useCallback(() => {
     localStorage.clear();
+    sessionStorage.clear();
     setUser(null);
-    setMessage("👋 You have logged out.");
-    navigate("/"); // back to landing
-  };
+    setRole(null);
+    setMessage("👋 You have successfully logged out.");
+    navigate("/");
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-green-50 text-gray-800 p-6 font-sans">
+    <div className="min-h-screen bg-green-50 text-gray-800 p-4 sm:p-6 font-sans">
       <Header user={user} onLogout={handleLogout} />
+
       {message && (
-        <p className="mt-4 text-yellow-700 font-semibold">{message}</p>
+        <p className="mt-4 text-yellow-800 font-semibold text-center animate-pulse">
+          {message}
+        </p>
       )}
 
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
+      <div className="max-w-6xl mx-auto mt-6">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
 
-        {/* Redirect logged-in users away from login/register */}
-        <Route
-          path="/login"
-          element={
-            user ? (
-              <Navigate to="/dashboard" />
-            ) : (
-              <Login setUser={setUser} setMessage={setMessage} />
-            )
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            user ? (
-              <Navigate to="/dashboard" />
-            ) : (
-              <Register setUser={setUser} setMessage={setMessage} />
-            )
-          }
-        />
+          {/* 🔐 Redirect logged-in users away from login/register */}
+          <Route
+            path="/login"
+            element={
+              user ? (
+                <Navigate to="/dashboard" />
+              ) : (
+                <Login setUser={setUser} setMessage={setMessage} />
+              )
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              user ? (
+                <Navigate to="/dashboard" />
+              ) : (
+                <Register setUser={setUser} setMessage={setMessage} />
+              )
+            }
+          />
 
-        <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
-        <Route path="/vendor-dashboard" element={<VendorDashboard />} />
+          {/* ✅ Role-based dashboards */}
+          <Route
+            path="/farmer-dashboard"
+            element={
+              role === "farmer" ? (
+                <FarmerDashboard />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/vendor-dashboard"
+            element={
+              role === "vendor" ? (
+                <VendorDashboard />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
 
-        {/* ✅ Protected dashboard route */}
-        <Route
-          path="/dashboard"
-          element={
-            user ? (
-              <Dashboard
-                products={products}
-                setProducts={setProducts}
-                setMessage={setMessage}
-              />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-      </Routes>
+          {/* ✅ Protected general dashboard */}
+          <Route
+            path="/dashboard"
+            element={
+              user ? (
+                <Dashboard
+                  user={user}
+                  products={products}
+                  setProducts={setProducts}
+                  setMessage={setMessage}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+
+          {/* 🚫 Catch-all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
     </div>
   );
 }
 
-// Dashboard component
-function Dashboard({ products, setProducts, setMessage }) {
-  // ✅ Fetch products from backend when the dashboard loads
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/api/products/");
-        const data = await response.json();
-        setProducts(data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-    fetchProducts();
-  }, [setProducts]);
+// ✅ Dashboard Component (cleaner, modular)
+function Dashboard({ user, products, setProducts, setMessage }) {
+  // Fetch products
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/`);
+      if (!response.ok) throw new Error("Failed to fetch products");
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error("❌ Error fetching products:", error);
+      setMessage("⚠️ Unable to load products. Please try again later.");
+    }
+  }, [setProducts, setMessage]);
 
-  // ✅ Add product to backend
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  // Add product
   const handleAddProduct = async (newProduct) => {
     try {
-      const response = await fetch("http://localhost:8000/api/products/", {
+      const response = await fetch(`${API_BASE_URL}/products/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newProduct),
@@ -130,32 +165,33 @@ function Dashboard({ products, setProducts, setMessage }) {
       if (!response.ok) throw new Error("Failed to add product");
 
       const savedProduct = await response.json();
-      setProducts([...products, savedProduct]);
+      setProducts((prev) => [...prev, savedProduct]);
       setMessage("✅ Product added successfully!");
     } catch (error) {
+      console.error(error);
       setMessage("❌ Failed to add product.");
     }
   };
 
-  // ✅ Calculate total cost of all products
+  // Calculate total cost
   const totalCost = products.reduce((acc, p) => acc + Number(p.price || 0), 0);
 
   return (
-    <div className="mt-6">
-      <p className="text-lg mb-4">
-        👋 Welcome,{" "}
-        <span className="font-semibold">{localStorage.getItem("username")}</span>!
-      </p>
+    <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8 mt-8">
+      <h2 className="text-2xl font-bold mb-4 text-green-700 text-center">
+        👋 Welcome, {user}!
+      </h2>
 
-      {/* Add new product form */}
+      {/* Add Product Form */}
       <ProductForm onAddProduct={handleAddProduct} />
 
-      {/* Show all products */}
+      {/* Product List */}
       <ProductList products={products} />
 
-      {/* ✅ Total cost display */}
-      <div className="mt-8 text-xl text-green-700 font-semibold text-center">
-        Total Value of Products: KSh {totalCost.toLocaleString()}
+      {/* Summary */}
+      <div className="mt-8 text-xl font-semibold text-center text-green-700 border-t pt-4">
+        💰 Total Value of Products:{" "}
+        <span className="text-green-800">KSh {totalCost.toLocaleString()}</span>
       </div>
     </div>
   );

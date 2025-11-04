@@ -11,7 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Basic user serializer for displaying user info."""
     class Meta:
         model = User
-        fields = ["id", "username", "role"]
+        fields = ["id", "username", "email", "role"]
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -20,11 +20,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["username", "password", "role"]
+        fields = ["username", "email", "password", "role"]
 
     def create(self, validated_data):
         password = validated_data.pop("password")
         role = validated_data.get("role", "farmer")
+        email = validated_data.get("email")
 
         user = User.objects.create_user(**validated_data, password=password)
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
-import ProductSection from "@/components/ProductSection";
+import ProductSection from "@/components/ProductsSection";
 import CartView from "@/components/CartView";
 
 export default function VendorDashboard() {

@@ -37,7 +37,8 @@ class RegisterView(APIView):
             "username": user.username,
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-            "role": user.role
+            "role": user.role,
+            "email": user.email
         }, status=status.HTTP_201_CREATED)
 
 
@@ -49,16 +50,18 @@ class LoginView(APIView):
 
     def post(self, request):
         username = request.data.get("username")
+        email = request.data.get("email")
         password = request.data.get("password")
 
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=username, password=password, email=email)
         if user is not None:
             refresh = RefreshToken.for_user(user)
             return Response({
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
                 "username": user.username,
-                "role": user.role
+                "role": user.role,
+                "email": user.email
             }, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
