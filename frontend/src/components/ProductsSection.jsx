@@ -1,35 +1,34 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import ProductForm from "./ProductForm";
-import ProductList from "./ProductList";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
-function ProductsSection() {
+export default function ProductSection() {
   const [products, setProducts] = useState([]);
 
-  // Fetch products when the component loads
   useEffect(() => {
-    axios
-      .get("http://localhost:8000/api/products/") // your Django endpoint
-      .then((response) => setProducts(response.data))
-      .catch((error) => console.error("Error fetching products:", error));
+    fetch("http://localhost:8000/api/products/")
+      .then((res) => res.json())
+      .then((data) => setProducts(data))
+      .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-  // Add product and send to backend
-  const handleAddProduct = async (newProduct) => {
-    try {
-      const response = await axios.post("http://localhost:8000/api/products/", newProduct);
-      setProducts((prev) => [...prev, response.data]); // update local list
-    } catch (error) {
-      console.error("Error adding product:", error);
-    }
-  };
-
   return (
-    <div className="p-6">
-      <ProductForm onAddProduct={handleAddProduct} />
-      <ProductList products={products} />
-    </div>
+    <motion.div
+      className="grid sm:grid-cols-2 md:grid-cols-3 gap-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+    >
+      {products.map((product) => (
+        <motion.div
+          key={product.id}
+          className="bg-white p-6 rounded-3xl shadow-lg border border-green-100 hover:shadow-2xl transition"
+          whileHover={{ scale: 1.03 }}
+        >
+          <h3 className="text-xl font-bold text-green-800">{product.name}</h3>
+          <p className="text-gray-600 mt-2">{product.description}</p>
+          <p className="text-green-700 font-semibold mt-3">KSh {product.price}</p>
+        </motion.div>
+      ))}
+    </motion.div>
   );
 }
-
-export default ProductsSection;

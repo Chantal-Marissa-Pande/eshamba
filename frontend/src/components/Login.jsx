@@ -1,91 +1,43 @@
-import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { login as loginAPI } from "../api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-function Login({ setUser, setMessage }) {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  });
-  const [remember, setRemember] = useState(true);
+export default function LoginPage() {
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await loginAPI(formData);
-
-      // Save tokens + username + role
-      const storage = remember ? localStorage : sessionStorage;
-      storage.setItem("access", res.access);
-      storage.setItem("refresh", res.refresh);
-      storage.setItem("username", res.username);
-      if (res.role) storage.setItem("role", res.role);
-
-      setUser(res.username);
-
-      // Map role to emoji
-      const roleEmoji = res.role === "farmer" ? "👩‍🌾" : res.role === "vendor" ? "🛒" : "👤";
-      setMessage(`✅ Logged in as ${roleEmoji} ${res.username} (${res.role})`);
-
-      // Redirect based on role
-      if (res.role === "farmer") {
-        navigate("/farmer-dashboard");
-      } else if (res.role === "vendor") {
-        navigate("/vendor-dashboard");
-      } else {
-        navigate("/dashboard");
-      }
-    } catch (err) {
-      setMessage("❌ Login failed: " + JSON.stringify(err));
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="mt-6 max-w-md mx-auto">
-      <h2 className="text-xl font-bold mb-4">Login</h2>
-
-      <input
-        type="text"
-        name="username"
-        placeholder="Username"
-        value={formData.username}
-        onChange={handleChange}
-        className="w-full p-2 mb-3 border rounded"
-      />
-
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={formData.password}
-        onChange={handleChange}
-        className="w-full p-2 mb-3 border rounded"
-      />
-
-      {/* Stay logged in */}
-      <label className="flex items-center mb-3">
-        <input
-          type="checkbox"
-          checked={remember}
-          onChange={() => setRemember(!remember)}
-          className="mr-2"
-        />
-        Stay logged in
-      </label>
-
-      <button
-        type="submit"
-        className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700"
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-green-400 via-emerald-500 to-green-700 text-white relative overflow-hidden">
+      <motion.div
+        className="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl p-10 w-[90%] max-w-md border border-white/20 text-center"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9 }}
       >
-        Login
-      </button>
-    </form>
+        <LogIn className="w-10 h-10 mx-auto text-lime-200 mb-4" />
+        <h2 className="text-3xl font-bold mb-6">Welcome Back</h2>
+
+        <div className="space-y-4">
+          <Input type="email" placeholder="Email" className="text-black" />
+          <Input type="password" placeholder="Password" className="text-black" />
+          <Button
+            onClick={() => navigate("/farmer-dashboard")}
+            className="bg-blue-600 hover:bg-blue-700 w-full py-3 rounded-2xl"
+          >
+            Login
+          </Button>
+        </div>
+      </motion.div>
+
+      <motion.footer
+        className="mt-10 text-sm text-white/80"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        © 2025 E-Shamba Kenya
+      </motion.footer>
+    </div>
   );
 }
-
-export default Login;

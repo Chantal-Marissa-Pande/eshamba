@@ -1,62 +1,82 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { LogIn, UserPlus, Sprout } from "lucide-react";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
+import { motion } from "framer-motion";
+import { Leaf, LogIn, UserPlus } from "lucide-react";
 
-function LandingPage() {
-  const navigate = useNavigate();
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-400 via-green-600 to-green-800 font-sans relative overflow-hidden">
-      {/* Background decor */}
-      <div className="absolute w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 top-20 left-10 animate-pulse"></div>
-      <div className="absolute w-[30rem] h-[30rem] bg-yellow-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 bottom-10 right-10 animate-pulse"></div>
+    <div className="relative min-h-screen flex flex-col justify-center items-center text-white overflow-hidden">
 
-      {/* Header */}
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Sprout className="w-6 h-6" /> Welcome to the E-Shamba website
-        </h1>
+      {/* Background image with overlay gradient */}
+      <div
+        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1598277445641-9cb79fbae4f0?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center"
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-green-800/80 via-emerald-700/80 to-green-900/80 backdrop-blur-sm" />
 
-      {/* Hero */}
-      <main className="relative z-10 flex-grow flex items-center justify-center text-center px-6">
-        <Card className="bg-white/10 backdrop-blur-xl border border-white/20 p-12 max-w-3xl rounded-3xl shadow-2xl text-white">
-          <h2 className="text-5xl font-extrabold mb-6 leading-tight">
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center text-center px-6">
+        {/* Top title */}
+        <motion.h1
+          className="text-3xl sm:text-4xl font-bold flex items-center mb-8 mt-4"
+          initial={{ y: -40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        >
+          <Leaf className="w-8 h-8 mr-2 text-lime-300" />
+          Welcome to the E-Shamba website
+        </motion.h1>
+
+        {/* Main hero card */}
+        <motion.div
+          className="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl p-10 max-w-2xl text-center border border-white/20"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9, delay: 0.3 }}
+        >
+          <h2 className="text-5xl sm:text-6xl font-extrabold mb-6 leading-tight">
             Empowering Farmers, <br /> Connecting Markets
           </h2>
-          <p className="text-lg mb-10 opacity-90 leading-relaxed">
-            E-Shamba bridges the gap between{" "}
-            <span className="font-semibold">farmers</span> and{" "}
-            <span className="font-semibold">vendors</span> — reducing food
-            waste and empowering local agriculture.
+
+          <p className="text-lg text-white/90 mb-10 max-w-xl mx-auto">
+            E-Shamba bridges the gap between <span className="font-semibold text-lime-200">farmers</span> and <span className="font-semibold text-lime-200">vendors</span> — reducing food waste and empowering local agriculture.
           </p>
 
-          <div className="flex justify-center item-start space-x-6 mt-6">
-            <Button
-              onClick={() => navigate("/login")}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl flex items-center gap-2"
+          {/* Buttons container */}
+          <div className="flex justify-center space-x-6">
+            <motion.a
+              href="/login"
+              className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg space-x-2 transition-all duration-200 hover:scale-105"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <LogIn size={20} /> Login
-            </Button>
-            <br />
-            <br />
-            <Button
-              onClick={() => navigate("/register")}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl flex items-center gap-2"
-            >
-              <UserPlus size={20} /> Register
-            </Button>
-          </div>
-        </Card>
-      </main>
+              <LogIn className="w-5 h-5" />
+              <span>Login</span>
+            </motion.a>
 
-      <footer className="relative z-10 text-white text-center py-6 opacity-80">
-        <p className="text-sm">
-          &copy; {new Date().getFullYear()} E-Shamba Kenya. All rights reserved.
-        </p>
-      </footer>
+            <br/><br/>
+
+            <motion.a
+              href="/register"
+              className="flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg space-x-2 transition-all duration-200 hover:scale-105"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <UserPlus className="w-5 h-5" />
+              <span>Register</span>
+            </motion.a>
+          </div>
+        </motion.div>
+
+        <br/><br/>
+
+        {/* Footer */}
+        <motion.footer
+          className="mt-12 text-sm text-white/80"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
+          © 2025 <span className="font-semibold text-white">E-Shamba Kenya</span>. All rights reserved.
+        </motion.footer>
+      </div>
     </div>
   );
 }
-
-export default LandingPage;
