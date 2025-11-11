@@ -1,146 +1,112 @@
 import { motion } from "framer-motion";
-import { LogIn, Leaf, Store, Eye, EyeOff } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { LogIn, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { login } from "../api";
 
-export default function LoginPage() {
+export default function LoginPage({ setUser, setMessage }) {
   const navigate = useNavigate();
-  const [role, setRole] = useState("farmer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // Example role-based navigation
-    if (role === "farmer") {
-      navigate("/farmer-dashboard");
-    } else {
-      navigate("/vendor-dashboard");
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const data = await login({ email, password });
+      console.log("✅ Login response:", data);
+
+      // Save tokens + user info
+      if (data.access && data.user) {
+        localStorage.setItem("access", data.access);
+        localStorage.setItem("refresh", data.refresh);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // Optional for easy use
+        setUser(data.user.username || data.user.email);
+        setMessage("✅ Login successful!");
+
+        // Redirect based on user role
+        const role = data.user.role?.toLowerCase();
+        if (role === "farmer") navigate("/farmer-dashboard");
+        else if (role === "vendor") navigate("/vendor-dashboard");
+        else navigate("/dashboard");
+      } else {
+        throw new Error("Invalid login response format");
+      }
+    } catch (error) {
+      console.error("❌ Login failed:", error);
+      setMessage("⚠️ Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-green-400 via-emerald-500 to-green-700 text-white relative overflow-hidden">
-      {/* Glass Card */}
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-green-300 via-green-500 to-green-700 text-white overflow-hidden px-4">
       <motion.div
-        className="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl p-10 w-[90%] max-w-md border border-white/20 text-center"
+        className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-8 sm:p-10 w-full max-w-md border border-white/20 text-center"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9 }}
+        transition={{ duration: 0.8 }}
       >
-        <LogIn className="w-10 h-10 mx-auto text-lime-200 mb-4" />
-        <h2 className="text-3xl font-bold mb-6">Welcome Back</h2>
+        <LogIn className="w-12 h-12 mx-auto text-lime-200 mb-4" />
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6">Welcome Back</h2>
 
-        {/* Input Fields */}
-        <div className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
           <Input
             type="email"
             placeholder="Email"
-            className="text-black"
+            aria-label="Email"
+            className="text-black rounded-lg focus:ring-2 focus:ring-lime-300 py-4 px-3 pr-12"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
 
-          {/* Password with toggle */}
           <div className="relative">
             <Input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
-              className="text-black pr-10"
+              aria-label="Password"
+              className="text-black rounded-lg focus:ring-2 focus:ring-lime-300 py-4 px-3 pr-12"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-            />:
+              required
+            />
             <button
               type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1 -translate-y-1 text-gray-600 hover:text-gray-800 transition"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-900 transition"
             >
-              {showPassword ? (
-                <EyeOff className="w-2 h-2" />
-              ) : (
-                <Eye className="w-2 h-2" />
-              )}
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
-          
-          <br/>
 
-          {/* Forgot Password */}
-          <div className="text-right text-sm">
-            <a
-              href="#"
-              className="text-lime-200 hover:text-white transition"
-            >
-              Forgot Password?
-            </a>
-          </div>
-          
-          <br/>
-
-          {/* Role Selection */}
-          <div className="flex justify-between mt-4">
-            <Button
-              variant={role === "farmer" ? "default" : "outline"}
-              onClick={() => setRole("farmer")}
-              className={`w-[48%] py-3 rounded-2xl flex items-center justify-center gap-2 ${
-                role === "farmer"
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-white/20 text-white border border-white/30 hover:bg-white/30"
-              }`}
-            >
-              <Leaf className="w-4 h-4" />
-              Farmer
-            </Button>
-            <br/><br/>
-
-            <Button
-              variant={role === "vendor" ? "default" : "outline"}
-              onClick={() => setRole("vendor")}
-              className={`w-[48%] py-3 rounded-2xl flex items-center justify-center gap-2 ${
-                role === "vendor"
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-white/20 text-white border border-white/30 hover:bg-white/30"
-              }`}
-            >
-              <Store className="w-4 h-4" />
-              Vendor
-            </Button>
-            <br/><br/>
-            
-          </div>
-
-          {/* Login Button */}
           <Button
-            onClick={handleLogin}
-            className="bg-green-600 hover:bg-green-700 w-full py-3 rounded-2xl mt-6"
+            type="submit"
+            disabled={loading}
+            className={`w-full py-4 rounded-2xl mt-6 transition-transform hover:scale-105 ${
+              loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+            }`}
           >
-            Login as {role.charAt(0).toUpperCase() + role.slice(1)}
+            {loading ? "Logging in..." : "Login"}
           </Button>
-        </div>
+        </form>
 
-        {/* Register Link */}
         <p className="mt-6 text-sm text-white/80">
           Don’t have an account?{" "}
-          <a
-            href="/register"
-            className="text-lime-200 font-semibold hover:underline"
-          >
+          <a href="/register" className="text-lime-200 font-semibold hover:underline">
             Register here
           </a>
         </p>
       </motion.div>
-
-      {/* Footer */}
-      <motion.footer
-        className="mt-10 text-sm text-white/80"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-      >
-        © 2025 E-Shamba Kenya
-      </motion.footer>
     </div>
   );
 }

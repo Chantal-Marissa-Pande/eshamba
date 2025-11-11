@@ -28,12 +28,20 @@ export default function ProductForm({ onAddProduct }) {
       animate={{ opacity: 1 }}
     >
       <Input
+        name = "image"
+        type = "file"
+        accept = "image/*"
+        onChange = {(e) => setFormData({ ...formData, image: e.target.files[0]})}
+      />
+      
+      <Input
         name="name"
         placeholder="Product Name"
         value={formData.name}
         onChange={handleChange}
         className="text-black"
       />
+
       <Input
         name="description"
         placeholder="Description"
@@ -41,6 +49,7 @@ export default function ProductForm({ onAddProduct }) {
         onChange={handleChange}
         className="text-black"
       />
+      
       <Input
         name="price"
         type="number"

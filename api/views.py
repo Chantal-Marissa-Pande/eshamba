@@ -34,11 +34,13 @@ class RegisterView(APIView):
 
         return Response({
             "message": "User registered successfully",
-            "username": user.username,
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-            "role": user.role,
-            "email": user.email
+            "user":{
+                "username": user.username,
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "role": user.role,
+                "email": user.email
+            }
         }, status=status.HTTP_201_CREATED)
 
 
@@ -49,11 +51,10 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get("username")
         email = request.data.get("email")
         password = request.data.get("password")
 
-        user = authenticate(username=username, password=password, email=email)
+        user = authenticate(request, password=password, email=email)
         if user is not None:
             refresh = RefreshToken.for_user(user)
             return Response({

@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from PIL import Image
 
 
 class User(AbstractUser):
@@ -30,6 +31,15 @@ class Product(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='product_images/', blank=True, null=True)
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.image:
+            img = Image.open(self.image.path)
+            max_size = (300,300)
+            img.thumbnail(max_size)
+            img.save(self.image.path)
 
     def __str__(self):
         return f"{self.name} - {self.owner.username}"
