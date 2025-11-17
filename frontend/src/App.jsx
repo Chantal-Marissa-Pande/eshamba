@@ -14,42 +14,37 @@ import AdminDashboard from "./components/AdminDashboard";
 
 import { fetchProducts, addProduct, fetchCart, addToCart } from "./api";
 
-// ✅ Use environment variable for backend URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
 function App() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(
-    localStorage.getItem("username") || sessionStorage.getItem("username") || null
-  );
-  const [role, setRole] = useState(
-    localStorage.getItem("role") || sessionStorage.getItem("role") || null
-  );
+  const [user, setUser] = useState(localStorage.getItem("username") || null);
+  const [role, setRole] = useState(localStorage.getItem("role") || null);
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [message, setMessage] = useState("");
 
-  // ✅ Auto-login on refresh
+  // Auto-login and redirect
   useEffect(() => {
-    const savedUser = localStorage.getItem("username") || sessionStorage.getItem("username");
-    const savedRole = localStorage.getItem("role") || sessionStorage.getItem("role");
-
-    if (savedUser) {
-      setUser(savedUser);
-      setRole(savedRole);
-
-      // redirect user based on role
-      if (savedRole === "farmer") navigate("/farmer-dashboard");
-      else if (savedRole === "vendor") navigate("/vendor-dashboard");
-      else if (savedRole === "admin") navigate("/admin-dashboard");
-      else navigate("/dashboard");
+    if (user && role) {
+      switch (role) {
+        case "farmer":
+          navigate("/farmer-dashboard");
+          break;
+        case "vendor":
+          navigate("/vendor-dashboard");
+          break;
+        case "administrator":
+          navigate("/admin-dashboard");
+          break;
+        default:
+          navigate("/dashboard");
+          break;
+      }
     }
-  }, [navigate]);
+  }, [user, role, navigate]);
 
-  // ✅ Logout handler
+  // Logout
   const handleLogout = useCallback(() => {
     localStorage.clear();
-    sessionStorage.clear();
     setUser(null);
     setRole(null);
     setMessage("👋 You have successfully logged out.");
@@ -70,29 +65,15 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
 
-          {/* 🔐 Redirect logged-in users away from login/register */}
           <Route
             path="/login"
-            element={
-              user ? (
-                <Navigate to="/dashboard" />
-              ) : (
-                <Login setUser={setUser} setMessage={setMessage} />
-              )
-            }
+            element={user ? <Navigate to="/dashboard" /> : <Login setUser={setUser} setMessage={setMessage} />}
           />
           <Route
             path="/register"
-            element={
-              user ? (
-                <Navigate to="/dashboard" />
-              ) : (
-                <Register setUser={setUser} setMessage={setMessage} />
-              )
-            }
+            element={user ? <Navigate to="/dashboard" /> : <Register setUser={setUser} setMessage={setMessage} />}
           />
 
-          {/* ✅ Role-based dashboards */}
           <Route
             path="/farmer-dashboard"
             element={
@@ -110,6 +91,7 @@ function App() {
               )
             }
           />
+
           <Route
             path="/vendor-dashboard"
             element={
@@ -131,7 +113,7 @@ function App() {
           <Route
             path="/admin-dashboard"
             element={
-              role === "admin" ? (
+              role === "administrator" ? (
                 <AdminDashboard
                   user={user}
                   products={products}
@@ -146,7 +128,6 @@ function App() {
             }
           />
 
-          {/* ✅ Protected general dashboard */}
           <Route
             path="/dashboard"
             element={
@@ -165,7 +146,6 @@ function App() {
             }
           />
 
-          {/* 🚫 Catch-all route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -173,7 +153,7 @@ function App() {
   );
 }
 
-// ✅ Dashboard Component (Products + Cart)
+// Dashboard component for general users (shows products + cart)
 function Dashboard({ user, products, setProducts, cart, setCart, setMessage }) {
   // Fetch products
   const fetchAllProducts = useCallback(async () => {
@@ -181,8 +161,8 @@ function Dashboard({ user, products, setProducts, cart, setCart, setMessage }) {
       const data = await fetchProducts();
       setProducts(data);
     } catch (error) {
-      console.error("❌ Error fetching products:", error);
-      setMessage("⚠️ Unable to load products. Please try again later.");
+      console.error(error);
+      setMessage("⚠️ Unable to load products.");
     }
   }, [setProducts, setMessage]);
 
@@ -192,8 +172,8 @@ function Dashboard({ user, products, setProducts, cart, setCart, setMessage }) {
       const data = await fetchCart();
       setCart(data);
     } catch (error) {
-      console.error("❌ Error fetching cart:", error);
-      setMessage("⚠️ Unable to load cart. Please try again later.");
+      console.error(error);
+      setMessage("⚠️ Unable to load cart.");
     }
   }, [setCart, setMessage]);
 
@@ -202,7 +182,7 @@ function Dashboard({ user, products, setProducts, cart, setCart, setMessage }) {
     fetchUserCart();
   }, [fetchAllProducts, fetchUserCart]);
 
-  // Add product (for farmer)
+  // Add product
   const handleAddProduct = async (newProduct) => {
     try {
       const savedProduct = await addProduct(newProduct);
@@ -214,7 +194,7 @@ function Dashboard({ user, products, setProducts, cart, setCart, setMessage }) {
     }
   };
 
-  // Add item to cart
+  // Add to cart
   const handleAddToCart = async (productId) => {
     try {
       const item = await addToCart({ product: productId, quantity: 1 });
@@ -226,7 +206,7 @@ function Dashboard({ user, products, setProducts, cart, setCart, setMessage }) {
     }
   };
 
-  // Calculate total product value
+  // Total product value
   const totalCost = products.reduce((acc, p) => acc + Number(p.price || 0), 0);
 
   return (
@@ -235,22 +215,16 @@ function Dashboard({ user, products, setProducts, cart, setCart, setMessage }) {
         👋 Welcome, {user}!
       </h2>
 
-      {/* Add Product Form (if farmer) */}
       <ProductForm onAddProduct={handleAddProduct} />
-
-      {/* Product List */}
       <ProductList products={products} onAddToCart={handleAddToCart} />
 
-      {/* Cart Summary */}
       <div className="mt-8 text-lg font-semibold text-center text-green-700 border-t pt-4">
         🛒 Cart Items: {cart.length} | Total Value: KSh{" "}
         {cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0).toLocaleString()}
       </div>
 
-      {/* Product Summary */}
       <div className="mt-4 text-xl font-semibold text-center text-green-700 border-t pt-4">
-        💰 Total Value of Products:{" "}
-        <span className="text-green-800">KSh {totalCost.toLocaleString()}</span>
+        💰 Total Value of Products: <span className="text-green-800">KSh {totalCost.toLocaleString()}</span>
       </div>
     </div>
   );

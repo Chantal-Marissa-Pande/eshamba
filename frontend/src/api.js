@@ -11,14 +11,26 @@ const API = axios.create({
 // -----------------------------
 // Interceptor: attach JWT access token
 // -----------------------------
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("access");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+API.interceptors.request.use((config) => {
+  if (config.url.endsWith("/register/") || config.url.endsWith("/login/")) {
+    return config; // don't attach token
+  }
+  const token = localStorage.getItem("access");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// -----------------------------
+// Role-based redirection helper
+// -----------------------------
+export const redirectByRole = (role) => {
+  const paths = {
+    administrator: "/admin-dashboard",
+    farmer: "/farmer-dashboard",
+    vendor: "/vendor-dashboard",
+  };
+  window.location.href = paths[role] || "/dashboard";
+};
 
 // -----------------------------
 // Auth APIs
@@ -26,15 +38,18 @@ API.interceptors.request.use(
 export const login = async (credentials) => {
   try {
     const res = await API.post("/login/", credentials);
-    return {
-      user: {
-        username: res.data.username,
-        email: res.data.email,
-        role: res.data.role,
-      },
-      access: res.data.access,
-      refresh: res.data.refresh,
-    };
+
+    const { username, email, role, access, refresh } = res.data;
+
+    // Store tokens and user info
+    localStorage.setItem("access", access);
+    localStorage.setItem("refresh", refresh);
+    localStorage.setItem("username", username);
+    localStorage.setItem("role", role);
+
+    redirectByRole(role);
+
+    return { user: { username, email, role }, access, refresh };
   } catch (error) {
     console.error("❌ Login API error:", error.response?.data || error.message);
     throw error.response?.data || error;
@@ -44,15 +59,18 @@ export const login = async (credentials) => {
 export const register = async (userData) => {
   try {
     const res = await API.post("/register/", userData);
-    return {
-      user: {
-        username: res.data.user.username,
-        email: res.data.user.email,
-        role: res.data.user.role,
-      },
-      access: res.data.user.access,
-      refresh: res.data.user.refresh,
-    };
+
+    const { username, email, role, access, refresh } = res.data.user;
+
+    // Store tokens and user info
+    localStorage.setItem("access", access);
+    localStorage.setItem("refresh", refresh);
+    localStorage.setItem("username", username);
+    localStorage.setItem("role", role);
+
+    redirectByRole(role);
+
+    return { user: { username, email, role }, access, refresh };
   } catch (error) {
     console.error("❌ Register API error:", error.response?.data || error.message);
     throw error.response?.data || error;
