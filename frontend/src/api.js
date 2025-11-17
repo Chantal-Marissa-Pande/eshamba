@@ -4,146 +4,103 @@ import axios from "axios";
 // Base API Configuration
 // -----------------------------
 const API = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/",
-});
-
-// Attach JWT token to every request
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api/",
+  headers: { "Content-Type": "application/json" },
 });
 
 // -----------------------------
-// AUTH APIs
+// Interceptor: attach JWT access token
 // -----------------------------
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("access");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-// ✅ Register new user
-export const register = async (formData) => {
+// -----------------------------
+// Auth APIs
+// -----------------------------
+export const login = async (credentials) => {
   try {
-    const res = await API.post("register/", formData, {
-      headers: { "Content-Type": "application/json" },
-    });
-
-    // Backend should return user + tokens
-    const { access, refresh, user } = res.data;
-
-    // Save everything properly
-    localStorage.setItem("access", access);
-    localStorage.setItem("refresh", refresh);
-    localStorage.setItem("user", JSON.stringify(user));
-
-    return { access, refresh, user };
-  } catch (err) {
-    console.error("❌ Registration failed:", err.response?.data || err);
-    throw err.response?.data || err;
-  }
-};
-
-// ✅ Login
-export const login = async (formData) => {
-  try {
-    const payload = {
-      email: formData.email,
-      password: formData.password,
+    const res = await API.post("/login/", credentials);
+    return {
+      user: {
+        username: res.data.username,
+        email: res.data.email,
+        role: res.data.role,
+      },
+      access: res.data.access,
+      refresh: res.data.refresh,
     };
-
-    const res = await API.post("login/", payload, {
-      headers: { "Content-Type": "application/json" },
-    });
-
-    const { access, refresh, user } = res.data;
-
-    // Save tokens and user
-    localStorage.setItem("access", access);
-    localStorage.setItem("refresh", refresh);
-    localStorage.setItem("user", JSON.stringify(user));
-
-    return { access, refresh, user };
-  } catch (err) {
-    console.error("❌ Login failed:", err.response?.data || err);
-    throw err.response?.data || err;
+  } catch (error) {
+    console.error("❌ Login API error:", error.response?.data || error.message);
+    throw error.response?.data || error;
   }
 };
 
-// ✅ Refresh token
-export const refreshToken = async () => {
-  const refresh = localStorage.getItem("refresh");
-  if (!refresh) return null;
-
+export const register = async (userData) => {
   try {
-    const res = await API.post("token/refresh/", { refresh });
-    localStorage.setItem("access", res.data.access);
-    return res.data;
-  } catch (err) {
-    console.error("❌ Token refresh failed:", err);
-    throw err.response?.data || err;
+    const res = await API.post("/register/", userData);
+    return {
+      user: {
+        username: res.data.user.username,
+        email: res.data.user.email,
+        role: res.data.user.role,
+      },
+      access: res.data.user.access,
+      refresh: res.data.user.refresh,
+    };
+  } catch (error) {
+    console.error("❌ Register API error:", error.response?.data || error.message);
+    throw error.response?.data || error;
   }
 };
 
-// ✅ Logout
-export const logout = () => {
-  localStorage.clear();
-};
-
 // -----------------------------
-// PRODUCT APIs
+// Product APIs
 // -----------------------------
-
-// ✅ Get all products
-export const getProducts = async () => {
-  const res = await API.get("products/");
-  return res.data;
-};
-
-// ✅ Create product (with image upload)
-export const createProduct = async (data) => {
+export const fetchProducts = async () => {
   try {
-    const form = new FormData();
-    form.append("name", data.name);
-    form.append("description", data.description);
-    form.append("price", data.price);
-    if (data.image) form.append("image", data.image);
-
-    const res = await API.post("products/", form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
+    const res = await API.get("/products/");
     return res.data;
-  } catch (err) {
-    console.error("❌ Product creation failed:", err.response?.data || err);
-    throw err.response?.data || err;
+  } catch (error) {
+    console.error("❌ Fetch products API error:", error.response?.data || error.message);
+    throw error.response?.data || error;
   }
 };
 
-// ✅ Update product
-export const updateProduct = async (id, data) => {
-  const res = await API.put(`products/${id}/`, data);
-  return res.data;
-};
-
-// ✅ Delete product
-export const deleteProduct = async (id) => {
-  const res = await API.delete(`products/${id}/`);
-  return res.data;
+export const addProduct = async (productData) => {
+  try {
+    const res = await API.post("/products/", productData);
+    return res.data;
+  } catch (error) {
+    console.error("❌ Add product API error:", error.response?.data || error.message);
+    throw error.response?.data || error;
+  }
 };
 
 // -----------------------------
-// CART APIs
+// Cart APIs
 // -----------------------------
-export const addToCart = async (productId, quantity = 1) => {
-  const res = await API.post("cart/", { product: productId, quantity });
-  return res.data;
+export const fetchCart = async () => {
+  try {
+    const res = await API.get("/cart/");
+    return res.data;
+  } catch (error) {
+    console.error("❌ Fetch cart API error:", error.response?.data || error.message);
+    throw error.response?.data || error;
+  }
 };
 
-export const getCartItems = async () => {
-  const res = await API.get("cart/");
-  const cartItems = res.data;
-  const total = cartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  );
-  return { cartItems, total };
+export const addToCart = async (cartItem) => {
+  try {
+    const res = await API.post("/cart/", cartItem);
+    return res.data;
+  } catch (error) {
+    console.error("❌ Add to cart API error:", error.response?.data || error.message);
+    throw error.response?.data || error;
+  }
 };

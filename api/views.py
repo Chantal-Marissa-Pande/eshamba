@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, get_user_model
-from rest_framework import generics, permissions, status
+
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,36 +18,47 @@ from .serializers import (
 User = get_user_model()
 
 
-# -----------------------------
-# User Registration
-# -----------------------------
+# ------------------------------------
+# USER REGISTRATION (Public)
+# ------------------------------------
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
-        if not serializer.is_valid():
-            print("❌ Registration error details:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        user = serializer.save()
+        if not serializer.is_valid():
+            return Response(
+                {"errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = serializer.save()
+        except Exception as e:
+            # Covers duplicate username/email and other DB errors
+            return Response(
+                {"error": "User with those details already exists."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         refresh = RefreshToken.for_user(user)
 
         return Response({
             "message": "User registered successfully",
-            "user":{
+            "user": {
                 "username": user.username,
+                "email": user.email,
+                "role": user.role,
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
-                "role": user.role,
-                "email": user.email
             }
         }, status=status.HTTP_201_CREATED)
 
 
-# -----------------------------
-# Login (JWT)
-# -----------------------------
+# ------------------------------------
+# LOGIN (JWT) via EMAIL (Public)
+# ------------------------------------
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -54,68 +66,88 @@ class LoginView(APIView):
         email = request.data.get("email")
         password = request.data.get("password")
 
-        user = authenticate(request, password=password, email=email)
-        if user is not None:
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-                "username": user.username,
-                "role": user.role,
-                "email": user.email
-            }, status=status.HTTP_200_OK)
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        if not email or not password:
+            return Response(
+                {"error": "Email and password are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if user exists by email
+        try:
+            user_obj = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "Invalid credentials"}, status=401)
+
+        # Use username for Django authenticate()
+        user = authenticate(request, username=user_obj.username, password=password)
+
+        if user is None:
+            return Response({"error": "Invalid credentials"}, status=401)
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        })
 
 
-# -----------------------------
-# User List (open for now)
-# -----------------------------
+# ------------------------------------
+# PUBLIC USER LIST (for testing)
+# ------------------------------------
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
 
-# -----------------------------
-# Product Create/List
-# -----------------------------
+# ------------------------------------
+# PRODUCT CREATE / LIST
+# Farmers → see their own
+# Vendors → see all
+# Guests → see all
+# ------------------------------------
 class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
 
     def get_permissions(self):
-        # Allow anyone to view, but only authenticated users to add
         if self.request.method == "GET":
             return [AllowAny()]
         return [IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
-        # If unauthenticated → show all products
+
         if not user.is_authenticated:
             return Product.objects.all()
 
-        if user.role == 'farmer':
+        if user.role == "farmer":
             return Product.objects.filter(owner=user)
-        elif user.role == 'vendor':
+
+        if user.role == "vendor":
             return Product.objects.all()
+
         return Product.objects.none()
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
 
-# -----------------------------
-# Product Detail
-# -----------------------------
+# ------------------------------------
+# PRODUCT DETAIL (Auth required)
+# ------------------------------------
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]
 
 
-# -----------------------------
-# Cart Views
-# -----------------------------
+# ------------------------------------
+# CART (Auth required)
+# ------------------------------------
 class CartListCreateView(generics.ListCreateAPIView):
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
@@ -127,8 +159,8 @@ class CartListCreateView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
 
 
-# -----------------------------
-# Landing Page
-# -----------------------------
+# ------------------------------------
+# LANDING PAGE
+# ------------------------------------
 def landing_page(request):
     return JsonResponse({"message": "Welcome to the E-Shamba API!"})

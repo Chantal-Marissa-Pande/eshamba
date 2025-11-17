@@ -25,8 +25,6 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop("password")
         role = validated_data.get("role", "farmer")
-        email = validated_data.get("email")
-
         user = User.objects.create_user(**validated_data, password=password)
 
         # Automatically assign user to their role group

@@ -10,6 +10,9 @@ import ProductForm from "./components/ProductForm";
 import ProductList from "./components/ProductList";
 import FarmerDashboard from "./components/FarmerDashboard";
 import VendorDashboard from "./components/VendorDashboard";
+import AdminDashboard from "./components/AdminDashboard";
+
+import { fetchProducts, addProduct, fetchCart, addToCart } from "./api";
 
 // ✅ Use environment variable for backend URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
@@ -23,6 +26,7 @@ function App() {
     localStorage.getItem("role") || sessionStorage.getItem("role") || null
   );
   const [products, setProducts] = useState([]);
+  const [cart, setCart] = useState([]);
   const [message, setMessage] = useState("");
 
   // ✅ Auto-login on refresh
@@ -37,6 +41,7 @@ function App() {
       // redirect user based on role
       if (savedRole === "farmer") navigate("/farmer-dashboard");
       else if (savedRole === "vendor") navigate("/vendor-dashboard");
+      else if (savedRole === "admin") navigate("/admin-dashboard");
       else navigate("/dashboard");
     }
   }, [navigate]);
@@ -92,7 +97,14 @@ function App() {
             path="/farmer-dashboard"
             element={
               role === "farmer" ? (
-                <FarmerDashboard />
+                <FarmerDashboard
+                  user={user}
+                  products={products}
+                  setProducts={setProducts}
+                  cart={cart}
+                  setCart={setCart}
+                  setMessage={setMessage}
+                />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -102,7 +114,32 @@ function App() {
             path="/vendor-dashboard"
             element={
               role === "vendor" ? (
-                <VendorDashboard />
+                <VendorDashboard
+                  user={user}
+                  products={products}
+                  setProducts={setProducts}
+                  cart={cart}
+                  setCart={setCart}
+                  setMessage={setMessage}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/admin-dashboard"
+            element={
+              role === "admin" ? (
+                <AdminDashboard
+                  user={user}
+                  products={products}
+                  setProducts={setProducts}
+                  cart={cart}
+                  setCart={setCart}
+                  setMessage={setMessage}
+                />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -118,6 +155,8 @@ function App() {
                   user={user}
                   products={products}
                   setProducts={setProducts}
+                  cart={cart}
+                  setCart={setCart}
                   setMessage={setMessage}
                 />
               ) : (
@@ -134,14 +173,12 @@ function App() {
   );
 }
 
-// ✅ Dashboard Component (cleaner, modular)
-function Dashboard({ user, products, setProducts, setMessage }) {
+// ✅ Dashboard Component (Products + Cart)
+function Dashboard({ user, products, setProducts, cart, setCart, setMessage }) {
   // Fetch products
-  const fetchProducts = useCallback(async () => {
+  const fetchAllProducts = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/products/`);
-      if (!response.ok) throw new Error("Failed to fetch products");
-      const data = await response.json();
+      const data = await fetchProducts();
       setProducts(data);
     } catch (error) {
       console.error("❌ Error fetching products:", error);
@@ -149,22 +186,26 @@ function Dashboard({ user, products, setProducts, setMessage }) {
     }
   }, [setProducts, setMessage]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  // Fetch cart
+  const fetchUserCart = useCallback(async () => {
+    try {
+      const data = await fetchCart();
+      setCart(data);
+    } catch (error) {
+      console.error("❌ Error fetching cart:", error);
+      setMessage("⚠️ Unable to load cart. Please try again later.");
+    }
+  }, [setCart, setMessage]);
 
-  // Add product
+  useEffect(() => {
+    fetchAllProducts();
+    fetchUserCart();
+  }, [fetchAllProducts, fetchUserCart]);
+
+  // Add product (for farmer)
   const handleAddProduct = async (newProduct) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/products/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProduct),
-      });
-
-      if (!response.ok) throw new Error("Failed to add product");
-
-      const savedProduct = await response.json();
+      const savedProduct = await addProduct(newProduct);
       setProducts((prev) => [...prev, savedProduct]);
       setMessage("✅ Product added successfully!");
     } catch (error) {
@@ -173,7 +214,19 @@ function Dashboard({ user, products, setProducts, setMessage }) {
     }
   };
 
-  // Calculate total cost
+  // Add item to cart
+  const handleAddToCart = async (productId) => {
+    try {
+      const item = await addToCart({ product: productId, quantity: 1 });
+      setCart((prev) => [...prev, item]);
+      setMessage("🛒 Added to cart!");
+    } catch (error) {
+      console.error(error);
+      setMessage("❌ Failed to add to cart.");
+    }
+  };
+
+  // Calculate total product value
   const totalCost = products.reduce((acc, p) => acc + Number(p.price || 0), 0);
 
   return (
@@ -182,14 +235,20 @@ function Dashboard({ user, products, setProducts, setMessage }) {
         👋 Welcome, {user}!
       </h2>
 
-      {/* Add Product Form */}
+      {/* Add Product Form (if farmer) */}
       <ProductForm onAddProduct={handleAddProduct} />
 
       {/* Product List */}
-      <ProductList products={products} />
+      <ProductList products={products} onAddToCart={handleAddToCart} />
 
-      {/* Summary */}
-      <div className="mt-8 text-xl font-semibold text-center text-green-700 border-t pt-4">
+      {/* Cart Summary */}
+      <div className="mt-8 text-lg font-semibold text-center text-green-700 border-t pt-4">
+        🛒 Cart Items: {cart.length} | Total Value: KSh{" "}
+        {cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0).toLocaleString()}
+      </div>
+
+      {/* Product Summary */}
+      <div className="mt-4 text-xl font-semibold text-center text-green-700 border-t pt-4">
         💰 Total Value of Products:{" "}
         <span className="text-green-800">KSh {totalCost.toLocaleString()}</span>
       </div>

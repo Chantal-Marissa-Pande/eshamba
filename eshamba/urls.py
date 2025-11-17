@@ -10,8 +10,9 @@ def landing_page(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', landing_page, name="root"),
-    path('api/', include('api.urls')), 
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('api/', include('api.urls')),
+]
 
+# Serve media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
