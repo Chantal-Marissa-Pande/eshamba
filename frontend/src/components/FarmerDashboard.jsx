@@ -1,58 +1,66 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Sprout } from "lucide-react";
-import ProductForm from "@/components/ProductForm";
-import ProductList from "@/components/ProductList";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchMyProducts, addProduct } from "../api";
 
 export default function FarmerDashboard() {
   const [products, setProducts] = useState([]);
+  const [form, setForm] = useState({ name: "", price: "" });
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/products/")
-      .then((res) => res.json())
-      .then((data) => setProducts(data))
-      .catch((err) => console.error("Error fetching products:", err));
+    fetchMyProducts().then(setProducts);
   }, []);
 
-  const handleAddProduct = (newProduct) => {
-    setProducts((prev) => [...prev, newProduct]);
+  const handleAdd = async () => {
+    const newItem = await addProduct(form);
+    setProducts([...products, newItem]);
+    setForm({ name: "", price: "" });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-100 to-green-200 text-gray-800">
-      <motion.div
-        className="max-w-6xl mx-auto py-10 px-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      >
-        <motion.h1
-          className="text-4xl font-extrabold text-green-800 flex items-center gap-3 mb-8"
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-        >
-          <Sprout className="w-8 h-8 text-green-600" />
-          Farmer Dashboard
-        </motion.h1>
+    <div className="p-8">
+      <h1 className="text-3xl font-bold text-green-700 mb-6">Farmer Dashboard</h1>
 
-        <motion.div
-          className="bg-white rounded-3xl shadow-xl p-8 border border-green-100"
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <ProductForm onAddProduct={handleAddProduct} />
-        </motion.div>
+      {/* Add Produce */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Add Produce</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <input
+            className="border rounded px-3 py-2 w-full"
+            placeholder="Product Name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
 
-        <motion.div
-          className="mt-10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <ProductList products={products} />
-        </motion.div>
-      </motion.div>
+          <input
+            className="border rounded px-3 py-2 w-full"
+            placeholder="Price"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })}
+          />
+
+          <Button onClick={handleAdd} className="bg-green-600 hover:bg-green-700">
+            Add Product
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Product List */}
+      <h2 className="text-2xl font-semibold mb-3">My Produce</h2>
+      <div className="grid md:grid-cols-3 gap-6">
+        {products.map((p, i) => (
+          <Card key={i} className="shadow">
+            <CardHeader>
+              <CardTitle>{p.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700">KSh {p.price}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

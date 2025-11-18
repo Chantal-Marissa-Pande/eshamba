@@ -4,6 +4,8 @@ from .views import (
     UserListView,
     ProductListCreateView,
     ProductDetailView,
+    FarmerListView,
+    VendorListView,
     RegisterView,
     LoginView,
     CartListCreateView,
@@ -21,8 +23,9 @@ urlpatterns = [
     path('products/', ProductListCreateView.as_view(), name='product_list'),
     path('products/<int:pk>/', ProductDetailView.as_view(), name='product_detail'),
 
-    # Landing
-    path('', landing_page, name='landing'),
+    # Farmers & Vendors lists
+    path('farmers/', FarmerListView.as_view(), name='farmer_list'),
+    path('vendors/', VendorListView.as_view(), name='vendor_list'),
 
     # Cart
     path('cart/', CartListCreateView.as_view(), name='cart'),

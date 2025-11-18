@@ -103,6 +103,18 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
+# -----------------------------
+# FARMERS / VENDORS LIST (ADMIN)
+# -----------------------------
+class FarmerListView(generics.ListAPIView):
+    queryset = User.objects.filter(role='farmer')
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    
+class VendorListView(generics.ListAPIView):
+    queryset = User.objects.filter(role='vendor')
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
 # -----------------------------
 # PRODUCT CREATE / LIST

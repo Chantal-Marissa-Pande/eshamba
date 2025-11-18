@@ -1,44 +1,47 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { ShoppingBag } from "lucide-react";
-import ProductSection from "@/components/ProductsSection";
-import CartView from "@/components/CartView";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchProducts } from "../api";
 
 export default function VendorDashboard() {
-  const [cartItems, setCartItems] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [cart, setCart] = useState([]);
 
-  const handleAddToCart = (product) => {
-    setCartItems((prev) => [...prev, product]);
+  useEffect(() => {
+    fetchProducts().then(setProducts);
+  }, []);
+
+  const addToCart = (item) => {
+    setCart([...cart, item]);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-100 to-green-200 text-gray-800">
-      <motion.div
-        className="max-w-6xl mx-auto py-10 px-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      >
-        <motion.h1
-          className="text-4xl font-extrabold text-green-800 flex items-center gap-3 mb-8"
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-        >
-          <ShoppingBag className="w-8 h-8 text-green-600" />
-          Vendor Dashboard
-        </motion.h1>
+    <div className="p-8">
+      <h1 className="text-3xl font-bold text-green-700 mb-6">Vendor Dashboard</h1>
 
-        <ProductSection onAddToCart={handleAddToCart} />
+      {/* Cart Info */}
+      <div className="text-right mb-4 text-gray-700">
+        🛒 Cart Items: <span className="font-bold">{cart.length}</span>
+      </div>
 
-        <motion.div
-          className="mt-10"
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <CartView cartItems={cartItems} />
-        </motion.div>
-      </motion.div>
+      <div className="grid md:grid-cols-3 gap-6">
+        {products.map((p, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <CardTitle>{p.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>KSh {p.price}</p>
+              <Button
+                className="mt-3 bg-green-600 hover:bg-green-700"
+                onClick={() => addToCart(p)}
+              >
+                Add to Cart
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

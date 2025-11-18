@@ -122,3 +122,23 @@ export const addToCart = async (cartItem) => {
     throw error.response?.data || error;
   }
 };
+
+// -----------------------------
+// Admin data
+// -----------------------------
+// FILTER USERS BY ROLE
+export const fetchFarmers = async () => {
+  const res = await API.get("/users/?role=farmer");
+  return res.data;
+};
+
+export const fetchVendors = async () => {
+  const res = await API.get("/users/?role=vendor");
+  return res.data;
+};
+
+// If admin wants to see ALL products
+export const fetchAllProducts = async () => {
+  const res = await API.get("/products/");
+  return res.data;
+};

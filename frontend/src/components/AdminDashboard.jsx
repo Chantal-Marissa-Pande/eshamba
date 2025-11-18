@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchProducts } from "../api";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { fetchFarmers, fetchVendors, fetchAllProducts } from "../api";
 
 export default function AdminDashboard() {
   const [farmers, setFarmers] = useState([]);
@@ -7,51 +8,64 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    // 🧠 Replace with actual API endpoints for admin
-    fetchProducts().then(setProducts);
-    // Example:
-    // fetchFarmers().then(setFarmers);
-    // fetchVendors().then(setVendors);
+    fetchFarmers().then(setFarmers);
+    fetchVendors().then(setVendors);
+    fetchAllProducts().then(setProducts);
   }, []);
 
   return (
-    <div className="p-8 bg-white rounded-2xl shadow-md">
-      <h1 className="text-3xl font-bold text-green-700 text-center mb-6">
-        🛠️ Admin Dashboard
-      </h1>
+    <div className="p-8">
+      <h1 className="text-3xl font-bold text-green-700 mb-6">🛠️ Admin Dashboard</h1>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <section className="border rounded-xl p-4">
-          <h2 className="text-xl font-semibold mb-3 text-green-600">Farmers</h2>
-          {farmers.length ? (
-            farmers.map((f, i) => <p key={i}>👨‍🌾 {f.username}</p>)
-          ) : (
-            <p>No farmers yet.</p>
-          )}
-        </section>
+      {/* Stats */}
+      <div className="grid md:grid-cols-3 gap-6 mb-10">
+        <Card>
+          <CardHeader><CardTitle>Farmers</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl">{farmers.length}</p></CardContent>
+        </Card>
 
-        <section className="border rounded-xl p-4">
-          <h2 className="text-xl font-semibold mb-3 text-green-600">Vendors</h2>
-          {vendors.length ? (
-            vendors.map((v, i) => <p key={i}>🏪 {v.username}</p>)
-          ) : (
-            <p>No vendors yet.</p>
-          )}
-        </section>
+        <Card>
+          <CardHeader><CardTitle>Vendors</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl">{vendors.length}</p></CardContent>
+        </Card>
 
-        <section className="border rounded-xl p-4">
-          <h2 className="text-xl font-semibold mb-3 text-green-600">Products</h2>
-          {products.length ? (
-            products.map((p, i) => (
-              <div key={i} className="text-sm mb-2">
-                🧺 {p.name} — <span className="text-gray-600">KSh {p.price}</span>
-              </div>
-            ))
-          ) : (
-            <p>No products available.</p>
-          )}
-        </section>
+        <Card>
+          <CardHeader><CardTitle>Products</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl">{products.length}</p></CardContent>
+        </Card>
       </div>
+
+      {/* Farmers */}
+      <h2 className="text-xl font-semibold mb-3">Farmers</h2>
+      <Card className="mb-8">
+        <CardContent className="p-4">
+          {farmers.length === 0 && <p>No farmers found.</p>}
+          {farmers.map((f, i) => (
+            <p key={i}>👨‍🌾 {f.username}</p>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Vendors */}
+      <h2 className="text-xl font-semibold mb-3">Vendors</h2>
+      <Card className="mb-8">
+        <CardContent className="p-4">
+          {vendors.length === 0 && <p>No vendors found.</p>}
+          {vendors.map((v, i) => (
+            <p key={i}>🏪 {v.username}</p>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Products */}
+      <h2 className="text-xl font-semibold mb-3">Products</h2>
+      <Card>
+        <CardContent className="p-4">
+          {products.map((p, i) => (
+            <p key={i}>🧺 {p.name} — KSh {p.price}</p>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
