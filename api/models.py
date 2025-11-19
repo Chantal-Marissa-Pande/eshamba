@@ -24,13 +24,11 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField()
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='products'
-    )
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')
+    created_by = models.TextField(blank = True, null = True)
+    image_base64 = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    image = models.ImageField(upload_to='product_images/', blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

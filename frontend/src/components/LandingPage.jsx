@@ -12,13 +12,15 @@ export default function LandingPage() {
         </h1>
 
         <div className="flex space-x-4">
-          <Link to="/login">
-            <Button variant="outline">Login</Button>
-          </Link>
           <Link to="/register">
             <Button className="bg-green-600 hover:bg-green-700 text-white">
               Register
             </Button>
+          </Link>
+          <br/><br/>
+
+          <Link to="/login">
+            <Button variant="outline">Login</Button>
           </Link>
         </div>
       </header>
@@ -40,7 +42,7 @@ export default function LandingPage() {
               Join as Farmer
             </Button>
           </Link>
-
+          <br/><br/>
           <Link to="/login">
             <Button variant="outline" className="px-6 py-3">
               Explore Marketplace

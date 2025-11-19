@@ -52,11 +52,23 @@ class RegisterSerializer(serializers.ModelSerializer):
 # PRODUCT SERIALIZER
 # -------------------------------
 class ProductSerializer(serializers.ModelSerializer):
-    owner = UserSerializer(read_only=True)
+    owner = serializers.SerializerMethodField(read_only = True)
+    image_base64 = serializers.CharField(required = False, allow_blank = True, allow_null = True)
 
     class Meta:
         model = Product
-        fields = ["id", "name", "price", "quantity", "owner", "image", "created_at"]
+        fields = ["id", "name", "price", "quantity", "owner", "image_base64", "created_at", "updated_at"]
+        read_only_fields = ["owner", "created_at", "updated_at"]
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user and user.is_authenticated:
+            validated_data["owner"] = user
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
 
 
 # -------------------------------

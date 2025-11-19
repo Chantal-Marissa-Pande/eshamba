@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import Product, Cart
 from .serializers import (
@@ -107,20 +108,27 @@ class UserListView(generics.ListAPIView):
 # FARMERS / VENDORS LIST (ADMIN)
 # -----------------------------
 class FarmerListView(generics.ListAPIView):
-    queryset = User.objects.filter(role='farmer')
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
-    
-class VendorListView(generics.ListAPIView):
-    queryset = User.objects.filter(role='vendor')
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return User.objects.filter(role__iexact="farmer").order_by("username")
+
+    
+class VendorListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(role__iexact="vendor").order_by("username")
+    
 # -----------------------------
 # PRODUCT CREATE / LIST
 # -----------------------------
 class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         if self.request.method == "GET":
@@ -129,14 +137,18 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        role = getattr(user, "role", "").lower()if user.is_authenticated else ""
 
-        if not user.is_authenticated:
-            return Product.objects.all()
-        if user.role == "farmer":
-            return Product.objects.filter(owner=user)
-        if user.role == "vendor":
-            return Product.objects.all()
-        return Product.objects.none()
+        # Admins see all products
+        if role == "admin" or role == "administrator":
+            return Product.objects.all().order_by('-created_at')
+        
+        # Farmers see only their products
+        if role == "farmer":
+            return Product.objects.filter(owner=user).order_by('-created_at')
+        
+        # Vendors and others see all products
+        return Product.objects.all().order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -149,6 +161,15 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Product.objects.all()
+    
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
 
 # -----------------------------

@@ -1,144 +1,81 @@
 import axios from "axios";
 
-// -----------------------------
-// Base API Configuration
-// -----------------------------
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api/",
   headers: { "Content-Type": "application/json" },
 });
 
-// -----------------------------
-// Interceptor: attach JWT access token
-// -----------------------------
+// Attach token for protected routes (skip on auth endpoints)
 API.interceptors.request.use((config) => {
-  if (config.url.endsWith("/register/") || config.url.endsWith("/login/")) {
-    return config; // don't attach token
+  const skipAuth =
+    config.url?.endsWith("/register/") || config.url?.endsWith("/login/");
+  if (!skipAuth) {
+    const token = localStorage.getItem("access");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
   }
-  const token = localStorage.getItem("access");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// -----------------------------
-// Role-based redirection helper
-// -----------------------------
-export const redirectByRole = (role) => {
-  const paths = {
-    administrator: "/admin-dashboard",
-    farmer: "/farmer-dashboard",
-    vendor: "/vendor-dashboard",
-  };
-  window.location.href = paths[role] || "/dashboard";
-};
-
-// -----------------------------
-// Auth APIs
-// -----------------------------
+// ----------------- Auth -----------------
 export const login = async (credentials) => {
-  try {
-    const res = await API.post("/login/", credentials);
-
-    const { username, email, role, access, refresh } = res.data;
-
-    // Store tokens and user info
-    localStorage.setItem("access", access);
-    localStorage.setItem("refresh", refresh);
-    localStorage.setItem("username", username);
-    localStorage.setItem("role", role);
-
-    redirectByRole(role);
-
-    return { user: { username, email, role }, access, refresh };
-  } catch (error) {
-    console.error("❌ Login API error:", error.response?.data || error.message);
-    throw error.response?.data || error;
-  }
+  const res = await API.post("/login/", credentials);
+  return res.data;
 };
 
-export const register = async (userData) => {
-  try {
-    const res = await API.post("/register/", userData);
-
-    const { username, email, role, access, refresh } = res.data.user;
-
-    // Store tokens and user info
-    localStorage.setItem("access", access);
-    localStorage.setItem("refresh", refresh);
-    localStorage.setItem("username", username);
-    localStorage.setItem("role", role);
-
-    redirectByRole(role);
-
-    return { user: { username, email, role }, access, refresh };
-  } catch (error) {
-    console.error("❌ Register API error:", error.response?.data || error.message);
-    throw error.response?.data || error;
-  }
+export const register = async (payload) => {
+  const res = await API.post("/register/", payload);
+  return res.data;
 };
 
-// -----------------------------
-// Product APIs
-// -----------------------------
+// ----------------- Products -----------------
 export const fetchProducts = async () => {
-  try {
-    const res = await API.get("/products/");
-    return res.data;
-  } catch (error) {
-    console.error("❌ Fetch products API error:", error.response?.data || error.message);
-    throw error.response?.data || error;
-  }
+  const res = await API.get("/products/");
+  return res.data;
 };
 
-export const addProduct = async (productData) => {
-  try {
-    const res = await API.post("/products/", productData);
-    return res.data;
-  } catch (error) {
-    console.error("❌ Add product API error:", error.response?.data || error.message);
-    throw error.response?.data || error;
-  }
+export const fetchMyProducts = async () => {
+  // backend filters by role; farmers will get only their own products
+  const res = await API.get("/products/");
+  return res.data;
 };
 
-// -----------------------------
-// Cart APIs
-// -----------------------------
-export const fetchCart = async () => {
-  try {
-    const res = await API.get("/cart/");
-    return res.data;
-  } catch (error) {
-    console.error("❌ Fetch cart API error:", error.response?.data || error.message);
-    throw error.response?.data || error;
-  }
+export const addProduct = async (payload) => {
+  // payload: { name, price, description, quantity, image_base64 }
+  const res = await API.post("/products/", payload);
+  return res.data;
 };
 
-export const addToCart = async (cartItem) => {
-  try {
-    const res = await API.post("/cart/", cartItem);
-    return res.data;
-  } catch (error) {
-    console.error("❌ Add to cart API error:", error.response?.data || error.message);
-    throw error.response?.data || error;
-  }
+export const updateProduct = async (id, payload) => {
+  const res = await API.patch(`/products/${id}/`, payload);
+  return res.data;
 };
 
-// -----------------------------
-// Admin data
-// -----------------------------
-// FILTER USERS BY ROLE
+export const deleteProduct = async (id) => {
+  const res = await API.delete(`/products/${id}/`);
+  return res.data;
+};
+
+// ----------------- Users -----------------
 export const fetchFarmers = async () => {
-  const res = await API.get("/users/?role=farmer");
+  const res = await API.get("/farmers/");
   return res.data;
 };
 
 export const fetchVendors = async () => {
-  const res = await API.get("/users/?role=vendor");
+  const res = await API.get("/vendors/");
   return res.data;
 };
 
-// If admin wants to see ALL products
-export const fetchAllProducts = async () => {
-  const res = await API.get("/products/");
+// ----------------- Cart (simple interfaces; adapt to your backend) -----------------
+export const fetchCart = async () => {
+  const res = await API.get("/cart/");
   return res.data;
 };
+
+export const addToCart = async (payload) => {
+  // payload: { product: id, quantity: number } — adapt to your cart model
+  const res = await API.post("/cart/", payload);
+  return res.data;
+};
+
+export default API;

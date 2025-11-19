@@ -9,7 +9,6 @@ from .views import (
     RegisterView,
     LoginView,
     CartListCreateView,
-    landing_page
 )
 
 urlpatterns = [
