@@ -34,22 +34,28 @@ export const fetchProducts = async () => {
 };
 
 export const fetchMyProducts = async () => {
-  // backend filters by role; farmers will get only their own products
   const res = await API.get("/products/");
   return res.data;
 };
 
-export const addProduct = async (payload) => {
-  // payload: { name, price, description, quantity, image_base64 }
-  const res = await API.post("/products/", payload);
+// Add product
+export const addProduct = async (formData) => {
+  const res = await API.post("/products/", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 };
 
-export const updateProduct = async (id, payload) => {
-  const res = await API.patch(`/products/${id}/`, payload);
+// Update product: only send image if provided
+export const updateProduct = async (id, formData) => {
+  const headers = formData instanceof FormData
+    ? { "Content-Type": "multipart/form-data" }
+    : { "Content-Type": "application/json" };
+  const res = await API.patch(`/products/${id}/`, formData, { headers });
   return res.data;
 };
 
+// Delete product
 export const deleteProduct = async (id) => {
   const res = await API.delete(`/products/${id}/`);
   return res.data;
@@ -66,14 +72,13 @@ export const fetchVendors = async () => {
   return res.data;
 };
 
-// ----------------- Cart (simple interfaces; adapt to your backend) -----------------
+// ----------------- Cart -----------------
 export const fetchCart = async () => {
   const res = await API.get("/cart/");
   return res.data;
 };
 
 export const addToCart = async (payload) => {
-  // payload: { product: id, quantity: number } — adapt to your cart model
   const res = await API.post("/cart/", payload);
   return res.data;
 };

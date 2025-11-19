@@ -19,22 +19,30 @@ export default function LoginPage({ setUser, setMessage, setRole }) {
     try {
       const data = await login({ email, password });
 
-      const userObj = data.user || {};
-      localStorage.setItem("access", data.access || "");
-      localStorage.setItem("refresh", data.refresh || "");
-      localStorage.setItem("user", JSON.stringify(userObj));
-      localStorage.setItem("username", userObj.username || "");
-      localStorage.setItem("role", userObj.role || "");
+      // Save tokens and user info
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
 
-      setUser(userObj.username || "");
-      setRole && setRole(userObj.role || "");
+      const userObj = {
+        username: data.username,
+        email: data.email,
+        role: data.role, 
+      };
+
+      localStorage.setItem("user", JSON.stringify(userObj));
+      localStorage.setItem("username", userObj.username);
+      localStorage.setItem("role", userObj.role.toLowerCase());
+
+      setUser(userObj.username);
+      setRole && setRole(userObj.role);
       setMessage("✅ Login successful!");
 
-      const r = (userObj.role || "").toLowerCase();
+      const r = data.role.toLowerCase();
       if (r === "farmer") navigate("/farmer-dashboard");
       else if (r === "vendor") navigate("/vendor-dashboard");
-      else if (r === "admin") navigate("/admin-dashboard");
+      else if (r === "admin" || r === "administrator") navigate("/admin-dashboard");
       else navigate("/");
+
     } catch (error) {
       console.error("❌ Login failed:", error);
       setMessage("⚠️ Invalid email or password.");

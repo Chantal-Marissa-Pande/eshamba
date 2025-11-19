@@ -107,7 +107,7 @@ return (
     <div className="p-8">
       <h1 className="text-3xl font-bold text-green-700 mb-6">Farmer Dashboard</h1>
 
-      {msg && <div className="mb-4 text-sm text-green-700">{msg}</div>}
+      {message && <div className="mb-4 text-sm text-green-700">{msg}</div>}
 
       <Card className="mb-8">
         <CardHeader>
@@ -120,12 +120,17 @@ return (
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
+          <br/>
+          <br/>
           <input
             className="border rounded px-3 py-2 w-full"
             placeholder="Price (KSh)"
             value={form.price}
             onChange={(e) => setForm({ ...form, price: e.target.value })}
           />
+          <br/>
+          <br/>
+
           <input
             className="border rounded px-3 py-2 w-full"
             placeholder="Quantity"
@@ -133,12 +138,16 @@ return (
             value={form.quantity}
             onChange={(e) => setForm({ ...form, quantity: e.target.value })}
           />
+          <br/>
+          <br/>
           <textarea
             className="border rounded px-3 py-2 w-full"
             placeholder="Description"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
+          <br/>
+          
           <input type="file" accept="image/*" onChange={handleFile} />
           {form.image_base64 && (
             <img src={form.image_base64} alt="preview" className="w-32 h-32 object-cover rounded" />
@@ -148,6 +157,9 @@ return (
             <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
               {loading ? "Saving..." : editingId ? "Update" : "Add Produce"}
             </Button>
+            <br/>
+            <br/>
+            
             <Button onClick={() => { resetForm(); setEditingId(null); }} variant="outline">
               Cancel
             </Button>

@@ -13,7 +13,7 @@ import AdminDashboard from "./components/AdminDashboard";
 function App() {
   const navigate = useNavigate();
   const [user, setUser] = useState(localStorage.getItem("username") || null);
-  const [role, setRole] = useState(localStorage.getItem("role") || null);
+  const [role, setRole] = useState(localStorage.getItem("role")?.toLowerCase() || null);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -49,9 +49,9 @@ function App() {
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login setUser={setUser} setRole={setRole} setMessage={setMessage} />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <Register setUser={setUser} setRole={setRole} setMessage={setMessage} />} />
 
-          <Route path="/farmer-dashboard" element={role === "farmer" ? <FarmerDashboard /> : <Navigate to="/" />} />
-          <Route path="/vendor-dashboard" element={role === "vendor" ? <VendorDashboard /> : <Navigate to="/" />} />
-          <Route path="/admin-dashboard" element={role === "admin" || role === "administrator" ? <AdminDashboard /> : <Navigate to="/" />} />
+          <Route path="/farmer-dashboard" element={role === "farmer" ? <FarmerDashboard /> : <Navigate to="/login" />} />
+          <Route path="/vendor-dashboard" element={role === "vendor" ? <VendorDashboard /> : <Navigate to="/login" />} />
+          <Route path="/admin-dashboard" element={["admin", "administrator"].includes(role) ? <AdminDashboard /> : <Navigate to="/login" />} />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
