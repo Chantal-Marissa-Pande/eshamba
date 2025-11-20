@@ -6,77 +6,75 @@ from .models import Product, Cart
 
 User = get_user_model()
 
-
-# -------------------------------
-# USER SERIALIZER (for display)
-# -------------------------------
 class UserSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ["id", "username", "email", "role"]
 
+    def get_role(self, obj):
+        role = getattr(obj, "role", "") or ""
+        if role.lower() in ("administrator", "admin"):
+            return "administrator"
+        return role.lower()
 
-# -------------------------------
-# REGISTER SERIALIZER
-# -------------------------------
+
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        validators=[validate_password]
-    )
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
 
     class Meta:
         model = User
         fields = ["username", "email", "password", "role"]
 
     def create(self, validated_data):
-        # Extract password and role
         password = validated_data.pop("password")
-        role = validated_data.pop("role", "farmer")  # default role
+        role = validated_data.pop("role", "farmer")
 
-        # Create user instance
         user = User(**validated_data)
         user.set_password(password)
         user.role = role
         user.save()
 
-        # Get OR create the role group correctly
         group, _ = Group.objects.get_or_create(name=role)
         user.groups.add(group)
 
         return user
 
 
-# -------------------------------
-# PRODUCT SERIALIZER
-# -------------------------------
 class ProductSerializer(serializers.ModelSerializer):
-    owner = serializers.SerializerMethodField(read_only = True)
-    image_base64 = serializers.CharField(required = False, allow_blank = True, allow_null = True)
+    owner = serializers.SerializerMethodField(read_only=True)
+    image_base64 = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Product
-        fields = ["id", "name", "price", "quantity", "owner", "image_base64", "created_at", "updated_at"]
+        fields = ["id", "name", "price", "quantity", "description", "owner", "image_base64", "created_at", "updated_at"]
         read_only_fields = ["owner", "created_at", "updated_at"]
 
+    def get_owner(self, obj):
+        return obj.owner.username if obj.owner else None
+
     def create(self, validated_data):
-        request = self.context.get("request")
+        request = self.context.get("request", None)
         user = getattr(request, "user", None)
-        if user and user.is_authenticated:
+        if user and user.is_authenticated and "owner" not in validated_data:
             validated_data["owner"] = user
         return super().create(validated_data)
-    
-    def update(self, instance, validated_data):
-        return super().update(instance, validated_data)
 
 
-# -------------------------------
-# CART SERIALIZER
-# -------------------------------
 class CartSerializer(serializers.ModelSerializer):
-    total_price = serializers.ReadOnlyField()
+    user = serializers.ReadOnlyField(source="user.id")
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
         fields = ["id", "user", "product", "quantity", "total_price"]
+        read_only_fields = ["user", "total_price"]
+
+    def get_total_price(self, obj):
+        try:
+            return obj.product.price * obj.quantity
+        except Exception:
+            return 0

@@ -5,10 +5,13 @@ const API = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach token for protected routes (skip on auth endpoints)
+// Attach token for protected routes (skip auth endpoints)
 API.interceptors.request.use((config) => {
   const skipAuth =
-    config.url?.endsWith("/register/") || config.url?.endsWith("/login/");
+    config.url?.endsWith("/register/") ||
+    config.url?.endsWith("/login/") ||
+    config.url?.endsWith("/token/") ||
+    config.url?.endsWith("/token/refresh/");
   if (!skipAuth) {
     const token = localStorage.getItem("access");
     if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -16,9 +19,10 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-// ----------------- Auth -----------------
+// AUTH
 export const login = async (credentials) => {
   const res = await API.post("/login/", credentials);
+  // We return full res.data (username, email, role, access, refresh)
   return res.data;
 };
 
@@ -27,41 +31,35 @@ export const register = async (payload) => {
   return res.data;
 };
 
-// ----------------- Products -----------------
+// PRODUCTS
 export const fetchProducts = async () => {
   const res = await API.get("/products/");
   return res.data;
 };
 
+// For farmers: backend filters products by owner for authenticated farmers.
 export const fetchMyProducts = async () => {
   const res = await API.get("/products/");
   return res.data;
 };
 
-// Add product
-export const addProduct = async (formData) => {
-  const res = await API.post("/products/", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export const addProduct = async (payload) => {
+  // payload: { name, price, quantity, description, image_base64 }
+  const res = await API.post("/products/", payload);
   return res.data;
 };
 
-// Update product: only send image if provided
-export const updateProduct = async (id, formData) => {
-  const headers = formData instanceof FormData
-    ? { "Content-Type": "multipart/form-data" }
-    : { "Content-Type": "application/json" };
-  const res = await API.patch(`/products/${id}/`, formData, { headers });
+export const updateProduct = async (id, payload) => {
+  const res = await API.patch(`/products/${id}/`, payload);
   return res.data;
 };
 
-// Delete product
 export const deleteProduct = async (id) => {
   const res = await API.delete(`/products/${id}/`);
   return res.data;
 };
 
-// ----------------- Users -----------------
+// USERS (admin)
 export const fetchFarmers = async () => {
   const res = await API.get("/farmers/");
   return res.data;
@@ -72,14 +70,16 @@ export const fetchVendors = async () => {
   return res.data;
 };
 
-// ----------------- Cart -----------------
+// CART
 export const fetchCart = async () => {
   const res = await API.get("/cart/");
   return res.data;
 };
 
 export const addToCart = async (payload) => {
-  const res = await API.post("/cart/", payload);
+  // payload: { product: id, quantity: number } or { product_id: id, quantity }
+  const body = payload.product !== undefined ? payload : { product: payload.product_id || payload.product, quantity: payload.quantity || 1 };
+  const res = await API.post("/cart/", body);
   return res.data;
 };
 

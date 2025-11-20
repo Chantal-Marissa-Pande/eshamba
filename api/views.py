@@ -6,23 +6,27 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import JSONParser
+
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Product, Cart
-from .serializers import (
-    UserSerializer,
-    RegisterSerializer,
-    ProductSerializer,
-    CartSerializer
-)
+from .serializers import UserSerializer, RegisterSerializer, ProductSerializer, CartSerializer
 
 User = get_user_model()
 
 
+def normalize_role(role_value):
+    if not role_value:
+        return ""
+    if role_value.lower() in ("administrator", "admin"):
+        return "administrator"
+    return role_value.lower()
+
+
 # -----------------------------
-# USER REGISTRATION (Public)
+# Authentication
 # -----------------------------
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
@@ -30,38 +34,26 @@ class RegisterView(APIView):
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
-
         if not serializer.is_valid():
-            return Response(
-                {"errors": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
+            return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = serializer.save()
-        except Exception as e:
-            return Response(
-                {"error": "User with those details already exists."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        except Exception:
+            return Response({"error": "User with those details already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         refresh = RefreshToken.for_user(user)
-
         return Response({
             "message": "User registered successfully",
             "user": {
                 "username": user.username,
                 "email": user.email,
-                "role": user.role,
+                "role": normalize_role(user.role),
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
             }
         }, status=status.HTTP_201_CREATED)
 
 
-# -----------------------------
-# LOGIN (JWT) via EMAIL (Public)
-# -----------------------------
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -69,12 +61,8 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
-
         if not email or not password:
-            return Response(
-                {"error": "Email and password are required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user_obj = User.objects.get(email=email)
@@ -86,27 +74,24 @@ class LoginView(APIView):
             return Response({"error": "Invalid credentials"}, status=401)
 
         refresh = RefreshToken.for_user(user)
-
         return Response({
             "username": user.username,
             "email": user.email,
-            "role": user.role,
+            "role": normalize_role(user.role),
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         })
 
 
 # -----------------------------
-# PUBLIC USER LIST
+# User Lists
 # -----------------------------
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-# -----------------------------
-# FARMERS / VENDORS LIST (ADMIN)
-# -----------------------------
+
 class FarmerListView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -114,21 +99,22 @@ class FarmerListView(generics.ListAPIView):
     def get_queryset(self):
         return User.objects.filter(role__iexact="farmer").order_by("username")
 
-    
+
 class VendorListView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return User.objects.filter(role__iexact="vendor").order_by("username")
-    
+
+
 # -----------------------------
-# PRODUCT CREATE / LIST
+# Products
 # -----------------------------
 class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
+    parser_classes = [JSONParser]  # Accept JSON POST
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         if self.request.method == "GET":
@@ -137,43 +123,27 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        role = getattr(user, "role", "").lower()if user.is_authenticated else ""
+        role = normalize_role(getattr(user, "role", "")) if user.is_authenticated else ""
 
-        # Admins see all products
-        if role == "admin" or role == "administrator":
+        if role == "administrator":
             return Product.objects.all().order_by('-created_at')
-        
-        # Farmers see only their products
-        if role == "farmer":
+        elif role == "farmer":
             return Product.objects.filter(owner=user).order_by('-created_at')
-        
-        # Vendors and others see all products
+        # public / vendor
         return Product.objects.all().order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
 
-# -----------------------------
-# PRODUCT DETAIL
-# -----------------------------
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Product.objects.all()
-    
-    def update(self, request, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
-    
-    def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)
-
 
 # -----------------------------
-# CART
+# Cart
 # -----------------------------
 class CartListCreateView(generics.ListCreateAPIView):
     serializer_class = CartSerializer
@@ -187,7 +157,7 @@ class CartListCreateView(generics.ListCreateAPIView):
 
 
 # -----------------------------
-# LANDING PAGE
+# Landing Page
 # -----------------------------
 def landing_page(request):
     return JsonResponse({"message": "Welcome to the E-Shamba API!"})

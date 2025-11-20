@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { fetchFarmers, fetchVendors, fetchProducts } from "../api";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { fetchFarmers, fetchVendors, fetchProducts, deleteProduct } from "../api";
 
 export default function AdminDashboard() {
   const [farmers, setFarmers] = useState([]);
@@ -8,132 +7,80 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState("");
 
-useEffect(() => {
+  useEffect(() => {
     (async () => {
       try {
-        const [fData, vData, pData] = await Promise.all([
-          fetchFarmers(),
-          fetchVendors(),
-          fetchProducts(),
-        ]);
-        setFarmers(fData);
-        setVendors(vData);
-        setProducts(pData);
+        const [f, v, p] = await Promise.all([fetchFarmers(), fetchVendors(), fetchProducts()]);
+        setFarmers(f);
+        setVendors(v);
+        setProducts(p);
       } catch (err) {
         console.error(err);
-        setMessage("❌ Failed to load admin data");
+        setMessage("Failed to load admin data.");
       }
     })();
   }, []);
 
-  const handleDeleteProduct = async (id) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+  const handleDelete = async (id) => {
+    if (!confirm("Delete product?")) return;
     try {
       await deleteProduct(id);
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-      setMessage("✅ Product deleted successfully.");
-    } catch (error) {
-      console.error("❌ Error deleting product:", error);
-      setMessage("⚠️ Failed to delete product. Please try again.");
+      setProducts((prev) => prev.filter((x) => x.id !== id));
+      setMessage("Product deleted.");
+    } catch (err) {
+      console.error(err);
+      setMessage("Delete failed.");
     }
   };
 
-return (
+  return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
+      {message && <div className="mb-4 text-red-600">{message}</div>}
 
-      {message && <div className="mb-4 text-sm text-red-600">{message}</div>}
-
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Farmers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{farmers.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Vendors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vendors.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
-          </CardContent>
-        </Card>
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white p-4 rounded shadow">
+          <div className="text-sm text-gray-600">Farmers</div>
+          <div className="text-2xl font-bold">{farmers.length}</div>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <div className="text-sm text-gray-600">Vendors</div>
+          <div className="text-2xl font-bold">{vendors.length}</div>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <div className="text-sm text-gray-600">Products</div>
+          <div className="text-2xl font-bold">{products.length}</div>
+        </div>
       </div>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3">Farmers</h2>
-        <div className="grid gap-2">
-          {farmers.map((f) => (
-            <div key={f.id} className="p-3 border rounded flex justify-between">
+      <h2 className="text-xl mb-3">Products</h2>
+      <div className="grid md:grid-cols-3 gap-4">
+        {products.map((p) => (
+          <div key={p.id} className="bg-white p-3 rounded shadow">
+            <div className="flex justify-between items-start">
               <div>
-                <div className="font-medium">{f.username}</div>
-                <div className="text-sm text-gray-600">{f.email}</div>
+                <div className="font-semibold">{p.name}</div>
+                <div className="text-sm text-gray-600">Owner: {p.owner}</div>
+                <div className="text-sm text-gray-600">KSh {p.price}</div>
               </div>
+              <button
+                onClick={() => handleDelete(p.id)}
+                className="bg-red-600 text-white px-2 py-1 rounded"
+              >
+                Delete
+              </button>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3">Vendors</h2>
-        <div className="grid gap-2">
-          {vendors.map((v) => (
-            <div key={v.id} className="p-3 border rounded flex justify-between">
-              <div>
-                <div className="font-medium">{v.username}</div>
-                <div className="text-sm text-gray-600">{v.email}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-3">Products</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          {products.map((p) => (
-            <Card key={p.id}>
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>{p.name}</span>
-                  <span className="text-sm text-gray-600">KSh {p.price}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {p.image_base64 && (
-                  <img
-                    src={p.image_base64}
-                    alt={p.name}
-                    className="w-full h-40 object-cover rounded mb-3"
-                  />
-                )}
-                <p className="text-sm text-gray-600">{p.description}</p>
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                    onClick={() => handleDeleteProduct(p.id)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+            {p.image_base64 && (
+              <img
+                src={`data:image/*;base64,${p.image_base64}`}
+                alt={p.name}
+                className="w-full h-36 object-cover mt-3 rounded"
+              />
+            )}
+            {p.description && <p className="text-sm text-gray-600 mt-2">{p.description}</p>}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

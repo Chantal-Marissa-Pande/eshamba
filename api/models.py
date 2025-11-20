@@ -1,8 +1,6 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from PIL import Image
-
 
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -22,22 +20,13 @@ class User(AbstractUser):
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.PositiveIntegerField()
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')
-    created_by = models.TextField(blank = True, null = True)
-    image_base64 = models.TextField(blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantity = models.PositiveIntegerField(default=0)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products')
+    description = models.TextField(blank=True, null=True)
+    image_base64 = models.TextField(blank=True, null=True)   # store base64 string
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        if self.image:
-            img = Image.open(self.image.path)
-            max_size = (300,300)
-            img.thumbnail(max_size)
-            img.save(self.image.path)
 
     def __str__(self):
         return f"{self.name} - {self.owner.username}"
