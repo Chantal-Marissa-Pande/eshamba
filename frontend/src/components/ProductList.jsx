@@ -22,6 +22,14 @@ export default function ProductList({ products }) {
           className="bg-white p-6 rounded-2xl shadow-lg border border-green-100 hover:shadow-2xl hover:-translate-y-1 transition"
           whileHover={{ scale: 1.03 }}
         >
+          {product.image_base64 && (
+            <img
+              src={`data:image/*;base64,${product.image_base64}`} 
+              alt={product.name}
+              className="w-full h-48 object-cover rounded-lg mb-4"
+            />
+          )}
+          
           <h3 className="text-xl font-bold text-green-800">{product.name}</h3>
           <p className="text-gray-600 mt-2">{product.description}</p>
           <p className="text-green-700 font-semibold mt-3">

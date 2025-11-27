@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.models import Group
@@ -24,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 # -------------------------
-# REGISTER SERIALIZER
+# REGISTER AND LOGIN SERIALIZERS
 # -------------------------
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -46,6 +47,23 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.groups.add(group)
 
         return user
+
+class LoginSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["role"] = user.role
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Include user details in login response
+        data["username"] = self.user.username
+        data["email"] = self.user.email
+        data["role"] = self.user.role
+
+        return data
 
 
 # -------------------------

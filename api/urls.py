@@ -9,6 +9,7 @@ from .views import (
     RegisterView,
     LoginView,
     CartListCreateView,
+    CartDetailView,
     landing_page
 )
 
@@ -26,4 +27,5 @@ urlpatterns = [
     path('vendors/', VendorListView.as_view(), name='vendor_list'),
 
     path('cart/', CartListCreateView.as_view(), name='cart'),
+    path('cart/<int:pk>/', CartDetailView.as_view(), name = 'cart_detail'),
 ]

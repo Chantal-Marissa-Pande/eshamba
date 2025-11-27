@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { register } from "../api";
+import { register, login } from "../api";
 
 export default function Register() {
   const nav = useNavigate();
@@ -14,11 +14,22 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     try {
-      await register({ username, email, password, role });
-      nav("/login");
+      const reg = await register({ username, email, password, role });
+      const cleanRole = (reg.role || "").toLowerCase();
+
+      const auth = await login({ email, password });
+
+      localStorage.setItem("access", auth.access);
+      localStorage.setItem("refresh", auth.refresh);
+      localStorage.setItem("username", auth.username);
+      localStorage.setItem("role", cleanRole);
+
+      if (cleanRole === "farmer") nav("/farmer");
+      else if (cleanRole === "vendor") nav("/vendor");
+      else nav("/admin");
     } catch (err) {
       console.error(err);
-      alert("Registration failed.");
+      alert("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

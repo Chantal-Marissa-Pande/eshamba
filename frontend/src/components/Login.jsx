@@ -16,10 +16,12 @@ export default function Login() {
     try {
       const res = await login({ email, password });
       const role = (res.role || "").toLowerCase();
+
       localStorage.setItem("access", res.access);
       localStorage.setItem("refresh", res.refresh);
       localStorage.setItem("username", res.username);
-      localStorage.setItem("role", role);
+      localStorage.setItem("role", res.role);
+      localStorage.setItem("email", res.email)
 
       if (role === "farmer") nav("/farmer");
       else if (role === "vendor") nav("/vendor");

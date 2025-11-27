@@ -19,9 +19,6 @@ export default function Navbar() {
       <div className="font-bold text-lg">E-Shamba</div>
       <div className="flex items-center gap-4">
         <Link className="hover:underline" to="/">Home</Link>
-        {role === "farmer" && <Link className="hover:underline" to="/farmer">Farmer</Link>}
-        {role === "vendor" && <Link className="hover:underline" to="/vendor">Vendor</Link>}
-        {role === "administrator" && <Link className="hover:underline" to="/admin">Admin</Link>}
         {!role ? (
           <Link className="hover:underline" to="/login">Login</Link>
         ) : (

@@ -7,28 +7,53 @@ const API = axios.create({
 
 // Attach token for protected routes (skip auth endpoints)
 API.interceptors.request.use((config) => {
-  const skipAuth =
-    config.url?.endsWith("/register/") ||
-    config.url?.endsWith("/login/") ||
-    config.url?.endsWith("/token/") ||
-    config.url?.endsWith("/token/refresh/");
+  const skipAuth = [
+    "/register",
+    "/login",
+    "/token",
+    "/token/refresh"
+  ].some(path =>
+    config.url?.endsWith(path)
+  );
+
   if (!skipAuth) {
     const token = localStorage.getItem("access");
     if (token) config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-});
+}, (error) => Promise.reject(error));
 
 // AUTH
 export const login = async (credentials) => {
   const res = await API.post("/login/", credentials);
-  // We return full res.data (username, email, role, access, refresh)
-  return res.data;
+  const u = res.data;
+  localStorage.setItem("access", u.access);
+  localStorage.setItem("refresh", u.refresh);
+  localStorage.setItem("role", (u.role|| "").toLowerCase())
+  
+  return {
+    username: u.username,
+    email: u.email,
+    role: (u.role|| "").toLowerCase(),
+    access: u.access,
+    refresh: u.refresh,
+  };
 };
 
 export const register = async (payload) => {
   const res = await API.post("/register/", payload);
-  return res.data;
+  const u = res.data.user;
+  localStorage.setItem("access", u.access);
+  localStorage.setItem("refresh", u.refresh);
+  localStorage.setItem("role", (u.role|| "").toLowerCase())
+  
+  return {
+    username: u.username,
+    email: u.email,
+    role: (u.role|| "").toLowerCase(),
+    access: u.access,
+    refresh: u.refresh,
+  };
 };
 
 // PRODUCTS
@@ -77,9 +102,18 @@ export const fetchCart = async () => {
 };
 
 export const addToCart = async (payload) => {
-  // payload: { product: id, quantity: number } or { product_id: id, quantity }
-  const body = payload.product !== undefined ? payload : { product: payload.product_id || payload.product, quantity: payload.quantity || 1 };
+  const body = { product: payload.product_id, quantity: payload.quantity || 1 };
   const res = await API.post("/cart/", body);
+  return res.data;
+};
+
+export const updateCartItem = async (id, payload) => {
+  const res = await API.patch(`/cart/${id}/`, payload);
+  return res.data;
+};
+
+export const deleteCartItem = async (id) => {
+  const res = await API.delete(`/cart/${id}/`);
   return res.data;
 };
 

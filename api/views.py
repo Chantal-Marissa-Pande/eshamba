@@ -10,9 +10,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.parsers import JSONParser
 
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import Product, Cart
-from .serializers import UserSerializer, RegisterSerializer, ProductSerializer, CartSerializer
+from .serializers import LoginSerializer, UserSerializer, RegisterSerializer, ProductSerializer, CartSerializer
 
 User = get_user_model()
 
@@ -35,6 +36,7 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
+            print(serializer.errors)
             return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = serializer.save()
@@ -55,7 +57,8 @@ class RegisterView(APIView):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class LoginView(APIView):
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -154,6 +157,13 @@ class CartListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class CartDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CartSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Cart.objects.filter(user = self.request.user)
 
 
 # -----------------------------
