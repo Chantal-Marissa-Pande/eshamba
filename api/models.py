@@ -24,7 +24,7 @@ class Product(models.Model):
     quantity = models.PositiveIntegerField(default=0)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products')
     description = models.TextField(blank=True, null=True)
-    image_base64 = models.TextField(blank=True, null=True)   # store base64 string
+    image_base64 = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -68,6 +68,10 @@ export default function VendorDashboard() {
             <div className="font-semibold">{p.name}</div>
             <div className="text-sm text-gray-600">KSh {p.price}</div>
             <div className="text-sm text-gray-600">Qty: {p.quantity}</div>
+            <div className="text-sm text-gray-500 mt-2">
+              <strong>Owner:</strong> {p.owner?.username || ""} <br/>
+              <strong>Email:</strong> {p.owner?.email || ""}
+              </div>
             <div className="mt-3">
               <button
                 onClick={() => handleAddToCart(p)}
