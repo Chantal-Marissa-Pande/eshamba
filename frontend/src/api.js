@@ -102,7 +102,7 @@ export const fetchCart = async () => {
 };
 
 export const addToCart = async (payload) => {
-  const body = { product: payload.product_id, quantity: payload.quantity || 1 };
+  const body = { product_id: payload.product_id, quantity: payload.quantity || 1 };
   const res = await API.post("/cart/", body);
   return res.data;
 };
